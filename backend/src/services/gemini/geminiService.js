@@ -25,7 +25,7 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
 }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: [
         {
           inlineData: {
@@ -41,12 +41,12 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
     });
 
     const rawJson = response.text;
-    
+
     // Clean potential markdown fences just in case
     const cleanJson = rawJson.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
-    
+
     const parsedData = JSON.parse(cleanJson);
-    
+
     // Validate against Zod schema
     const validatedData = extractionSchema.parse(parsedData);
 
@@ -112,7 +112,7 @@ ${message}`;
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: chatContents,
       config: {
         responseMimeType: 'application/json'
@@ -122,7 +122,7 @@ ${message}`;
     const rawJson = response.text;
     const cleanJson = rawJson.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
     const parsedData = JSON.parse(cleanJson);
-    
+
     const validatedData = chatSchema.parse(parsedData);
 
     return { success: true, data: validatedData };
@@ -141,7 +141,7 @@ The user wants to transform this document based on the following instruction:
 Output the transformed document text. Do not wrap it in markdown blockquotes unless specifically asked. Do not add conversational intro/outro text, just output the raw transformed content.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: [
         {
           inlineData: {
@@ -176,17 +176,31 @@ Return ONLY a JSON object with this exact structure:
 User instruction: "${instruction}"
 `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    
-    // Clean up potential markdown formatting
-    const cleanJson = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: prompt
+    });
+
+    const text = result.text;
+
+    const cleanJson = text
+      .replace(/^```json\s*/i, '')
+      .replace(/\s*```$/i, '');
+
     const data = JSON.parse(cleanJson);
-    
-    return { success: true, operation: data.operation || 'OTHER' };
+
+    return {
+      success: true,
+      operation: data.operation || 'OTHER'
+    };
+
   } catch (error) {
     console.error('Intent identification error:', error);
-    return { success: false, operation: 'OTHER' };
+
+    return {
+      success: false,
+      operation: 'OTHER'
+    };
   }
 };
 
