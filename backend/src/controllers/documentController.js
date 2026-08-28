@@ -416,11 +416,19 @@ const transformDocument = async (req, res) => {
       file_url: publicUrlData.publicUrl,
       file_size: transformedBuffer.length,
       mime_type: 'application/pdf',
-      status: 'completed',
+      status: 'processing',
       document_type: 'other'
     }).select().single();
 
     if (insertError) return res.status(500).json({ error: 'Failed to save transformed metadata' });
+
+    const processingService = require('../services/documents/processingService');
+    try {
+      // Synchronously process document
+      await processingService.processDocument(newDocument.id);
+    } catch (processError) {
+      console.error('Processing failed during transformation:', processError);
+    }
 
     return res.status(201).json({ message: 'Transformation complete', document: newDocument });
   } catch (error) {
