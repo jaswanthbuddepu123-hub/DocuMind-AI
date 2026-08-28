@@ -120,6 +120,7 @@ const FloatingAIAssistant = () => {
     );
   }
 
+  return (
     <>
       {/* Mobile Overlay */}
       {isOpen && (
