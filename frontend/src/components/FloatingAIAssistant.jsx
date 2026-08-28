@@ -120,8 +120,15 @@ const FloatingAIAssistant = () => {
     );
   }
 
-  return (
-    <aside className="w-80 lg:w-96 bg-white border-l border-gray-200 shadow-sm flex flex-col h-full transition-colors duration-200 dark:bg-gray-900 dark:border-gray-800 z-30 shrink-0">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-30 md:hidden" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
+      <aside className={`fixed md:relative right-0 top-0 bottom-0 w-80 lg:w-96 bg-white border-l border-gray-200 shadow-sm flex flex-col h-full transition-transform duration-300 dark:bg-gray-900 dark:border-gray-800 z-40 shrink-0 ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0 md:hidden'}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
         <div className="flex items-center gap-2">
@@ -231,7 +238,7 @@ const FloatingAIAssistant = () => {
         </form>
       </div>
     </aside>
-  );
+    </>
 };
 
 export default FloatingAIAssistant;

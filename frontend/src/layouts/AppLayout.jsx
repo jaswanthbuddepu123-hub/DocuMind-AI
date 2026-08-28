@@ -68,11 +68,33 @@ const AppLayout = () => {
            </button>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 md:p-8">
+        <div className="flex-1 overflow-auto p-4 pb-24 md:p-8">
           <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>
         </div>
+        
+        {/* Mobile Bottom Navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center p-2 z-20 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] dark:bg-gray-900 dark:border-gray-800">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center p-2 min-w-[64px] rounded-lg transition-colors ${
+                  isActive 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Icon size={20} className={isActive ? 'text-blue-600 dark:text-blue-400' : ''} />
+                <span className="text-[10px] mt-1 font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </main>
 
       {/* Right AI Assistant */}
