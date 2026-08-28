@@ -11,7 +11,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://documind-ai-orpin.vercel.app'
+    'https://docu-mind-ai-orpin.vercel.app'
   ],
   credentials: true
 }));
