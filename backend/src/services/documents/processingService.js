@@ -13,10 +13,15 @@ const processDocument = async (documentId) => {
 
     if (fetchError || !document) throw fetchError || new Error('Document not found');
 
-    // 2. Download file from Supabase Storage
-    const fileRes = await fetch(document.file_url);
-    if (!fileRes.ok) throw new Error(`Failed to download file: ${fileRes.statusText}`);
-    const arrayBuffer = await fileRes.arrayBuffer();
+    // 2. Download file from Supabase Storage securely
+    const urlParts = document.file_url.split('/documents/');
+    if (urlParts.length < 2) throw new Error('Invalid file URL format');
+    const storagePath = decodeURIComponent(urlParts[1].split('?')[0]);
+
+    const { data: fileData, error: downloadError } = await supabase.storage.from('documents').download(storagePath);
+    if (downloadError || !fileData) throw downloadError || new Error('Failed to download file securely');
+    
+    const arrayBuffer = await fileData.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
     // 3. Call Gemini

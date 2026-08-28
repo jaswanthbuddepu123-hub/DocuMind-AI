@@ -2,6 +2,8 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FileText, Upload, User, LayoutDashboard, LogOut } from 'lucide-react';
 
+import FloatingAIAssistant from '../components/FloatingAIAssistant';
+
 const AppLayout = () => {
   const { logout } = useAuth();
   const location = useLocation();
@@ -14,9 +16,9 @@ const AppLayout = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
+    <div className="flex h-screen w-full bg-gray-50 text-gray-900 font-sans transition-colors duration-200 dark:bg-gray-950 dark:text-gray-100 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm hidden md:flex">
+      <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col shadow-sm hidden md:flex transition-colors duration-200 dark:bg-gray-900 dark:border-gray-800 z-20">
         <div className="p-6 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
             D
@@ -35,20 +37,20 @@ const AppLayout = () => {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-50 text-blue-700 font-medium' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-50 text-blue-700 font-medium dark:bg-blue-900/40 dark:text-blue-400' 
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
                 }`}
               >
-                <Icon size={20} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
+                <Icon size={20} className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'} />
                 {item.name}
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800">
           <button 
             onClick={logout}
-            className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors duration-200"
+            className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors duration-200 dark:text-gray-400 dark:hover:bg-red-900/30 dark:hover:text-red-400"
           >
             <LogOut size={20} />
             Logout
@@ -57,11 +59,11 @@ const AppLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden relative z-10">
         {/* Topbar (Mobile mainly) */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-10 md:hidden">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex items-center justify-between sticky top-0 z-10 md:hidden dark:bg-gray-900/80 dark:border-gray-800">
            <span className="text-lg font-bold text-gray-800">DocuMind</span>
-           <button onClick={logout} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+           <button onClick={logout} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-400 dark:hover:bg-gray-800">
              <LogOut size={20} />
            </button>
         </header>
@@ -72,6 +74,9 @@ const AppLayout = () => {
           </div>
         </div>
       </main>
+
+      {/* Right AI Assistant */}
+      <FloatingAIAssistant />
     </div>
   );
 };

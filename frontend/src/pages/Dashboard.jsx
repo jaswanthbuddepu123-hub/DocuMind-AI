@@ -1,25 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getStats, listDocuments } from '../services/documentService';
-import { FileText, CheckCircle2, Clock, XCircle, UploadCloud, ChevronRight, File } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { getStats, listDocuments, chatWithDocument, getChatHistory, getGraphStats } from '../services/documentService';
+import { FileText, CheckCircle2, Clock, XCircle, UploadCloud, ChevronRight, File, BarChart3, MessageSquare, Send, Loader2, Bot, User, Zap } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ total: 0, completed: 0, processing: 0, failed: 0 });
   const [recentDocs, setRecentDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [realChartData, setRealChartData] = useState([]);
+  
+  // Chat state
+  const location = useLocation();
+  const [chatMessages, setChatMessages] = useState([{ role: 'ai', content: 'Hello! Select a document and ask me anything about it.' }]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [chatDocumentId, setChatDocumentId] = useState('');
+  const [isChatting, setIsChatting] = useState(false);
+  const [allDocs, setAllDocs] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsData, docsData] = await Promise.all([
+        const [statsData, docsData, graphData] = await Promise.all([
           getStats(),
-          listDocuments({ sort: 'desc', page: 1 })
+          listDocuments({ sort: 'desc', page: 1 }),
+          getGraphStats()
         ]);
         setStats(statsData);
-        // Ensure we only show top 5 in recent list
         setRecentDocs((docsData.data || []).slice(0, 5));
+        setAllDocs(docsData.data || []);
+        
+        // Check query params for documentId
+        const params = new URLSearchParams(location.search);
+        const docId = params.get('documentId');
+        if (docId) setChatDocumentId(docId);
+        
+        setRealChartData(graphData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data. Please check your connection or try again later.');
@@ -29,7 +48,21 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [location.search]);
+
+  useEffect(() => {
+    // Left empty since we moved AI chat to FloatingAIAssistant
+  }, [chatDocumentId]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    // Handled in FloatingAIAssistant
+  };
+
+  const renderMessageContent = (content) => {
+    // Handled in FloatingAIAssistant
+    return null;
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -85,6 +118,17 @@ const Dashboard = () => {
 
   const hasDocuments = stats.total > 0;
 
+  // Use real data from the backend
+  const chartData = realChartData.length > 0 ? realChartData : [
+    { name: 'Mon', processed: 0, failed: 0 },
+    { name: 'Tue', processed: 0, failed: 0 },
+    { name: 'Wed', processed: 0, failed: 0 },
+    { name: 'Thu', processed: 0, failed: 0 },
+    { name: 'Fri', processed: 0, failed: 0 },
+    { name: 'Sat', processed: 0, failed: 0 },
+    { name: 'Sun', processed: 0, failed: 0 }
+  ];
+
   return (
     <div className="pb-10 animate-in fade-in duration-500">
       {/* Header */}
@@ -136,6 +180,77 @@ const Dashboard = () => {
           <p className="text-3xl font-bold text-gray-900 mt-4">{stats.failed}</p>
         </div>
       </div>
+
+      {/* Charts & Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <BarChart3 size={20} className="text-indigo-600" />
+              Processing Volume (Last 7 Days)
+            </h2>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorProcessed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorFailed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  cursor={{ stroke: '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }}
+                />
+                <Area type="monotone" dataKey="processed" name="Processed" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorProcessed)" />
+                <Area type="monotone" dataKey="failed" name="Failed" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorFailed)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+          <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <CheckCircle2 size={20} className="text-green-600" />
+            Success Rate
+          </h2>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="relative w-40 h-40 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="80" cy="80" r="70" stroke="#f3f4f6" strokeWidth="12" fill="none" />
+                <circle 
+                  cx="80" cy="80" r="70" 
+                  stroke="#10b981" 
+                  strokeWidth="12" 
+                  fill="none" 
+                  strokeDasharray={`${2 * Math.PI * 70}`}
+                  strokeDashoffset={hasDocuments ? `${2 * Math.PI * 70 * (1 - (stats.completed / ((stats.completed + stats.failed) || 1)))}` : `${2 * Math.PI * 70}`}
+                  className="transition-all duration-1000 ease-out"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-4xl font-bold text-gray-900">
+                  {hasDocuments ? Math.round((stats.completed / ((stats.completed + stats.failed) || 1)) * 100) : 0}%
+                </span>
+              </div>
+            </div>
+            <p className="text-gray-500 mt-6 text-center text-sm">
+              {hasDocuments ? 'Documents processed successfully without errors.' : 'Upload documents to see your success rate.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Chat Assistant moved to right side globally */}
 
       {/* Recent Documents */}
       <div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getDocument, updateDocumentResult, deleteDocument } from '../services/documentService';
-import { FileText, CheckCircle2, AlertTriangle, AlertCircle, Edit3, Trash2, Save, Eye, File, DownloadCloud } from 'lucide-react';
+import { getDocument, updateDocumentResult, deleteDocument, downloadDocument, retryDocument, transformDocument } from '../services/documentService';
+import { FileText, CheckCircle2, AlertTriangle, AlertCircle, Edit3, Trash2, Save, Eye, File, DownloadCloud, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
 
 const DocumentDetail = () => {
   const { id } = useParams();
@@ -14,6 +14,12 @@ const DocumentDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [secureUrl, setSecureUrl] = useState(null);
+  
+  // Transform State
+  const [transformInstruction, setTransformInstruction] = useState('');
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const fetchDoc = async () => {
     try {
@@ -24,6 +30,15 @@ const DocumentDetail = () => {
       const resData = Array.isArray(data.document_results) ? data.document_results[0] : data.document_results;
       if (resData && resData.extracted_data && resData.extracted_data.fields) {
         setEditForm(resData.extracted_data.fields);
+      }
+
+      if (data.status !== 'failed') {
+        try {
+          const dl = await downloadDocument(id);
+          setSecureUrl(dl.url);
+        } catch (e) {
+          console.error("Failed to fetch secure url", e);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -64,6 +79,38 @@ const DocumentDetail = () => {
     }
   };
 
+  const handleRetry = async () => {
+    try {
+      setIsRetrying(true);
+      await retryDocument(id);
+      alert('Retry initiated. The document is processing again.');
+      navigate('/app/documents');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to retry: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleTransform = async () => {
+    if (!transformInstruction.trim()) return;
+    try {
+      setIsTransforming(true);
+      const res = await transformDocument(id, transformInstruction);
+      alert('Document transformed successfully!');
+      if (res.document && res.document.id) {
+        navigate(`/app/documents/${res.document.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to transform: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsTransforming(false);
+      setTransformInstruction('');
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -90,13 +137,13 @@ const DocumentDetail = () => {
   return (
     <div className="pb-12 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-5">
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-2xl shadow-inner border border-white">
+          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner border border-white dark:border-gray-800">
             <FileText size={32} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 truncate max-w-lg">{document.original_filename}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate max-w-lg">{document.original_filename}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-1.5">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded-md">
                 {document.document_type ? document.document_type.replace('_', ' ') : 'Unknown'}
@@ -120,15 +167,23 @@ const DocumentDetail = () => {
       </div>
 
       {document.status === 'failed' ? (
-        <div className="bg-red-50 border border-red-100 p-10 rounded-3xl text-center shadow-sm max-w-2xl mx-auto">
-          <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 p-10 rounded-3xl text-center shadow-sm max-w-2xl mx-auto">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/50 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-red-800 mb-3">AI Processing Failed</h2>
-          <p className="text-red-700 mb-6">We encountered an error while trying to analyze this document.</p>
-          <div className="bg-white p-5 rounded-2xl border border-red-100 text-left font-mono text-sm shadow-sm overflow-x-auto text-red-600">
+          <h2 className="text-2xl font-bold text-red-800 dark:text-red-400 mb-3">AI Processing Failed</h2>
+          <p className="text-red-700 dark:text-red-300 mb-6">We encountered an error while trying to analyze this document.</p>
+          <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-red-100 dark:border-red-800/50 text-left font-mono text-sm shadow-sm overflow-x-auto text-red-600 dark:text-red-400 mb-6">
             {document.processing_error || 'An unknown internal error occurred.'}
           </div>
+          <button 
+            onClick={handleRetry} 
+            disabled={isRetrying}
+            className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-xl font-medium transition-colors mx-auto shadow-md"
+          >
+            {isRetrying ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+            {isRetrying ? 'Retrying...' : 'Retry Processing'}
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -136,10 +191,10 @@ const DocumentDetail = () => {
           <div className="lg:col-span-2 space-y-8">
             
             {/* Extracted Fields */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
-                  <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><FileText size={18} /></div>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+              <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+                  <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg"><FileText size={18} /></div>
                   Extracted Information
                 </h3>
                 {resData?.extracted_data?.fields && (
@@ -160,7 +215,7 @@ const DocumentDetail = () => {
                   )
                 )}
               </div>
-              <div className="p-6 bg-gray-50/30">
+              <div className="p-6 bg-gray-50/30 dark:bg-gray-950/50">
                 {resData?.extracted_data?.fields ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-8">
                     {Object.entries(resData.extracted_data.fields).map(([key, value]) => {
@@ -178,10 +233,10 @@ const DocumentDetail = () => {
                               type="text"
                               value={editForm[key] || ''}
                               onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
-                              className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+                              className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                             />
                           ) : (
-                            <div className="text-sm font-medium text-gray-900 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
                               {value !== null && value !== '' ? String(value) : <span className="text-gray-400 italic">Not found</span>}
                             </div>
                           )}
@@ -198,14 +253,14 @@ const DocumentDetail = () => {
             </div>
 
             {/* AI Insights */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-               <div className="p-6 border-b border-gray-100 bg-white">
-                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
-                   <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><Eye size={18} /></div>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+               <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+                   <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg"><Eye size={18} /></div>
                    AI Insights
                  </h3>
                </div>
-               <div className="p-6 bg-gray-50/30">
+               <div className="p-6 bg-gray-50/30 dark:bg-gray-950/50">
                  {insights.length > 0 ? (
                    <ul className="space-y-4">
                      {insights.map((insight, idx) => (
@@ -228,10 +283,37 @@ const DocumentDetail = () => {
           {/* Right Column: Validation & Preview */}
           <div className="space-y-8">
             
+            {/* AI Transform */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl shadow-sm border border-indigo-500/50 overflow-hidden text-white p-6">
+              <h3 className="text-lg font-bold flex items-center gap-2.5 mb-2">
+                <Sparkles size={20} className="text-indigo-200" />
+                Transform Document
+              </h3>
+              <p className="text-indigo-100 text-sm mb-4">
+                Use AI to rewrite, summarize, or restructure this document. A new file will be created.
+              </p>
+              <div className="space-y-3">
+                <textarea
+                  value={transformInstruction}
+                  onChange={(e) => setTransformInstruction(e.target.value)}
+                  placeholder="e.g. Summarize this invoice into a short paragraph."
+                  className="w-full bg-indigo-900/40 border border-indigo-400/50 text-white placeholder-indigo-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-white/50 transition-all text-sm resize-none h-24"
+                ></textarea>
+                <button
+                  onClick={handleTransform}
+                  disabled={!transformInstruction.trim() || isTransforming}
+                  className="w-full py-2.5 bg-white text-indigo-600 hover:bg-indigo-50 disabled:bg-indigo-100 disabled:opacity-70 rounded-xl font-bold text-sm transition-colors flex justify-center items-center gap-2"
+                >
+                  {isTransforming ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  {isTransforming ? 'Transforming...' : 'Generate New Document'}
+                </button>
+              </div>
+            </div>
+
             {/* Validation */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-               <div className="p-6 border-b border-gray-100 bg-white">
-                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+               <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
                    {resData?.validation_status === 'valid' ? (
                      <div className="p-1.5 bg-green-50 text-green-600 rounded-lg"><CheckCircle2 size={18} /></div>
                    ) : (
@@ -240,7 +322,7 @@ const DocumentDetail = () => {
                    Validation
                  </h3>
                </div>
-               <div className="p-6 bg-gray-50/30">
+               <div className="p-6 bg-gray-50/30 dark:bg-gray-950/50">
                  {resData?.validation_status === 'valid' ? (
                    <div className="flex items-center gap-3 text-green-700 bg-green-50 p-4 rounded-2xl border border-green-100">
                      <CheckCircle2 size={24} className="shrink-0" />
@@ -266,26 +348,33 @@ const DocumentDetail = () => {
             </div>
 
             {/* Original File Preview */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[500px]">
-               <div className="p-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
-                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
-                   <div className="p-1.5 bg-gray-100 text-gray-600 rounded-lg"><File size={18} /></div>
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col h-[500px]">
+               <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex justify-between items-center shrink-0">
+                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+                   <div className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-lg"><File size={18} /></div>
                    Original File
                  </h3>
-                 <a href={document.file_url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors bg-gray-50 border border-gray-200 hover:border-blue-200 shadow-sm" title="Download Original">
-                   <DownloadCloud size={18} />
-                 </a>
+                 {secureUrl && (
+                   <a href={secureUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors bg-gray-50 border border-gray-200 hover:border-blue-200 shadow-sm" title="Download Original">
+                     <DownloadCloud size={18} />
+                   </a>
+                 )}
                </div>
-               <div className="flex-1 bg-gray-100 flex items-center justify-center p-4 overflow-hidden relative border-t border-gray-200 shadow-inner">
-                 {isImage ? (
-                   <img src={document.file_url} alt="Original Document" className="max-w-full max-h-full object-contain rounded-lg shadow-sm border border-gray-200 bg-white" />
+               <div className="flex-1 bg-gray-100 dark:bg-gray-950 flex items-center justify-center p-4 overflow-hidden relative border-t border-gray-200 dark:border-gray-800 shadow-inner">
+                 {!secureUrl ? (
+                   <div className="flex flex-col items-center justify-center text-gray-400">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mb-4"></div>
+                     <p>Loading secure preview...</p>
+                   </div>
+                 ) : isImage ? (
+                   <img src={secureUrl} alt="Original Document" className="max-w-full max-h-full object-contain rounded-lg shadow-sm border border-gray-200 bg-white" />
                  ) : isPdf ? (
-                   <iframe src={`${document.file_url}#toolbar=0`} className="w-full h-full rounded-lg bg-white shadow-sm border border-gray-200" title="PDF Preview" />
+                   <iframe src={`${secureUrl}#toolbar=0`} className="w-full h-full rounded-lg bg-white shadow-sm border border-gray-200" title="PDF Preview" />
                  ) : (
                    <div className="text-center text-gray-500 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
                      <File size={48} className="mx-auto mb-3 opacity-30" />
                      <p className="text-sm font-medium">Preview not available for this format</p>
-                     <a href={document.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold text-sm hover:underline mt-2 inline-block">Download instead</a>
+                     <a href={secureUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold text-sm hover:underline mt-2 inline-block">Download instead</a>
                    </div>
                  )}
                </div>
