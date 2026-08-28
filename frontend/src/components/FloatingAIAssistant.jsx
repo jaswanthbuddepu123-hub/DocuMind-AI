@@ -240,6 +240,7 @@ const FloatingAIAssistant = () => {
       </div>
     </aside>
     </>
+  );
 };
 
 export default FloatingAIAssistant;
