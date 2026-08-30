@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { listDocuments, deleteDocument } from '../services/documentService';
 import useDebounce from '../hooks/useDebounce';
-import { Search, Filter, Trash2, File, CheckCircle2, Clock, XCircle, UploadCloud, ChevronLeft, ChevronRight, Loader2, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, Trash2, File, CheckCircle2, Clock, XCircle, UploadCloud, ChevronLeft, ChevronRight, Loader2, ArrowUpDown, Eye } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Documents = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isCompact } = useTheme();
+
+  // Read initial query params
+  const initialStatus = useMemo(() => {
+    return new URLSearchParams(location.search).get('status') || '';
+  }, [location.search]);
+
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,13 +23,16 @@ const Documents = () => {
   // Filters
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [typeFilter, setTypeFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
-  const limit = 20;
+  const limit = isCompact ? 50 : 20;
 
-  const navigate = useNavigate();
+  // Sync state if URL changes from outside (e.g., clicking dashboard links repeatedly)
+  useEffect(() => {
+    setStatusFilter(initialStatus);
+  }, [initialStatus]);
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -52,9 +65,9 @@ const Documents = () => {
     setPage(1);
   }, [debouncedSearch, statusFilter, typeFilter, sortOrder]);
 
-  const handleArchive = async (e, id, filename) => {
+  const handleDelete = async (e, id, filename) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to archive "${filename}"?`)) {
+    if (window.confirm(`Are you sure you want to delete this document?\n\n"${filename}"`)) {
       try {
         await deleteDocument(id);
         // Optimistic UI update
@@ -62,7 +75,7 @@ const Documents = () => {
         setTotalCount(c => c - 1);
       } catch (err) {
         console.error(err);
-        alert('Failed to archive document. Please try again.');
+        alert('Failed to delete document. Please try again.');
       }
     }
   };
@@ -87,7 +100,7 @@ const Documents = () => {
     <div className="pb-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">My Documents</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Document History</h1>
           <p className="text-slate-400 mt-1">Manage and search through your processed files.</p>
         </div>
         <Link 
@@ -187,7 +200,7 @@ const Documents = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${isCompact ? 'lg:grid-cols-4 gap-4' : 'lg:grid-cols-3 gap-6'}`}>
             {documents.map((doc, index) => {
               // Handle PostgREST's return structure
               const resData = Array.isArray(doc.document_results) ? doc.document_results[0] : doc.document_results;
@@ -196,12 +209,12 @@ const Documents = () => {
                 <div 
                   key={doc.id} 
                   onClick={() => navigate(`/app/documents/${doc.id}`)}
-                  className="glass-card rounded-3xl p-6 cursor-pointer group flex flex-col relative overflow-hidden"
+                  className={`glass-card rounded-3xl ${isCompact ? 'p-4' : 'p-6'} cursor-pointer group flex flex-col relative overflow-hidden`}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                  {!isCompact && <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>}
                   
-                  <div className="flex justify-between items-start mb-4 relative z-10">
+                  <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-4'} relative z-10`}>
                     <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
                       <File size={24} />
                     </div>
@@ -211,7 +224,7 @@ const Documents = () => {
                   <div className="flex-1 relative z-10">
                     <h3 className="font-bold text-slate-100 text-lg mb-1 line-clamp-1 group-hover:text-indigo-300 transition-colors">{doc.original_filename}</h3>
                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-4">
-                      {doc.document_type ? doc.document_type.replace('_', ' ') : 'Unclassified'} • {(doc.file_size / 1024).toFixed(0)} KB
+                      {doc.document_type ? doc.document_type.replace('_', ' ') : 'Unknown'}
                     </p>
                     
                     <div className="grid grid-cols-2 gap-4 mt-auto border-t border-white/5 pt-4">
@@ -226,20 +239,37 @@ const Documents = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-5 relative z-10">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); navigate(`/app/dashboard?documentId=${doc.id}`); }}
-                      className="flex-1 bg-white/5 hover:bg-indigo-500 hover:text-white text-indigo-400 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 text-center border border-white/10 hover:border-transparent shadow-sm hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-                    >
-                      Ask AI
-                    </button>
-                    <button 
-                      onClick={(e) => handleArchive(e, doc.id, doc.original_filename)}
-                      className="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-500 text-slate-400 hover:text-white rounded-xl transition-all duration-300 border border-white/10 hover:border-transparent hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-                      title="Archive Document"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                  <div className="flex flex-col gap-3 mt-5 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="px-3 py-1.5 bg-white/5 rounded-lg border border-white/10 text-xs text-slate-300 font-bold">
+                        {(doc.file_size / 1024) > 1024 
+                          ? `${(doc.file_size / (1024 * 1024)).toFixed(1)} MB` 
+                          : `${(doc.file_size / 1024).toFixed(0)} KB`}
+                      </div>
+                      <button 
+                        onClick={(e) => handleDelete(e, doc.id, doc.original_filename)}
+                        className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors hover:bg-rose-500/10 rounded-lg"
+                        title="Delete Document"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate(`/app/dashboard?documentId=${doc.id}`); }}
+                        className="flex-1 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white py-2 rounded-xl text-sm font-medium transition-all duration-300 text-center border border-indigo-500/20 hover:border-transparent flex items-center justify-center gap-1.5 shadow-sm hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+                        title="Ask AI"
+                      >
+                        Ask AI
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate(`/app/documents/${doc.id}`); }}
+                        className="flex-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white py-2 rounded-xl text-sm font-medium transition-all duration-300 text-center border border-emerald-500/20 hover:border-transparent flex items-center justify-center gap-1.5 shadow-sm hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                      >
+                        <Eye size={16} /> View
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

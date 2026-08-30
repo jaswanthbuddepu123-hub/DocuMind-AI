@@ -38,7 +38,11 @@ const processDocument = async (documentId) => {
           user_id: document.user_id,
           classification: data.documentType,
           confidence: data.confidence,
-          extracted_data: { fields: data.fields, lineItems: data.lineItems },
+          extracted_data: { 
+            fields: data.fields, 
+            lineItems: data.lineItems,
+            validation: data.validation
+          },
           validation_status: data.validation.isValid ? 'valid' : 'invalid'
         }]);
         

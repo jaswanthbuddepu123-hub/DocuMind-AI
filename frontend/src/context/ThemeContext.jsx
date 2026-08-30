@@ -12,6 +12,10 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
+  const [isCompact, setIsCompact] = useState(() => {
+    return localStorage.getItem('isCompact') === 'true';
+  });
+
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -26,8 +30,16 @@ export const ThemeProvider = ({ children }) => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
+  const toggleCompact = () => {
+    setIsCompact(prev => {
+      const next = !prev;
+      localStorage.setItem('isCompact', next.toString());
+      return next;
+    });
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isCompact, toggleCompact }}>
       {children}
     </ThemeContext.Provider>
   );

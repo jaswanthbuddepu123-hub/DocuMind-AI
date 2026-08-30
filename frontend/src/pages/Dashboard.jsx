@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getStats, listDocuments, chatWithDocument, getChatHistory, getGraphStats } from '../services/documentService';
 import { FileText, CheckCircle2, Clock, XCircle, UploadCloud, ChevronRight, File, BarChart3, MessageSquare, Send, Loader2, Bot, User, Zap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -14,6 +13,7 @@ const Dashboard = () => {
   
   // Chat state
   const location = useLocation();
+  const navigate = useNavigate();
   const [chatMessages, setChatMessages] = useState([{ role: 'ai', content: 'Hello! Select a document and ask me anything about it.' }]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [chatDocumentId, setChatDocumentId] = useState('');
@@ -154,12 +154,16 @@ const Dashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 relative z-10">
         {[
-          { title: 'Total Documents', value: stats.total, icon: FileText, color: 'indigo' },
-          { title: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'emerald' },
-          { title: 'Processing', value: stats.processing, icon: Clock, color: 'amber' },
-          { title: 'Failed', value: stats.failed, icon: XCircle, color: 'rose' }
+          { title: 'Total Documents', value: stats.total, icon: FileText, color: 'indigo', status: '' },
+          { title: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'emerald', status: 'completed' },
+          { title: 'Processing', value: stats.processing, icon: Clock, color: 'amber', status: 'processing' },
+          { title: 'Failed', value: stats.failed, icon: XCircle, color: 'rose', status: 'failed' }
         ].map((stat, i) => (
-          <div key={i} className="glass-card p-6 rounded-[2rem] group relative overflow-hidden flex flex-col justify-between h-40">
+          <div 
+            key={i} 
+            onClick={() => navigate(stat.status ? `/app/documents?status=${stat.status}` : '/app/documents')}
+            className="glass-card p-6 rounded-[2rem] group relative overflow-hidden flex flex-col justify-between h-40 cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all"
+          >
             <div className={`absolute -right-6 -top-6 w-32 h-32 bg-${stat.color}-500/20 rounded-full mix-blend-screen filter blur-[30px] opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
             
             <div className="flex items-center gap-3 text-slate-400 mb-2 relative z-10">

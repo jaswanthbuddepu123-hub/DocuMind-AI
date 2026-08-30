@@ -48,6 +48,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleUpdateProfile = async (name, phone, avatar) => {
+    setLoading(true);
+    try {
+      const data = await authService.updateProfile(name, phone, avatar);
+      setUser(data);
+      return { success: true, user: data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Profile update failed' 
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -55,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login: handleLogin, register: handleRegister, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login: handleLogin, register: handleRegister, updateProfile: handleUpdateProfile, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

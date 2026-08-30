@@ -185,22 +185,55 @@ const deleteDocument = async (req, res) => {
     const userId = req.user.userId;
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    // 1. Fetch document to get file_url
+    const { data: document, error: fetchError } = await supabase
       .from('documents')
-      .update({ status: 'archived', updated_at: new Date().toISOString() })
+      .select('file_url')
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
       .single();
 
-    if (error) {
-       if (error.code === 'PGRST116') {
-         return res.status(404).json({ error: 'Document not found' });
-       }
-       throw error;
+    if (fetchError || !document) {
+      if (fetchError && fetchError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      throw fetchError;
     }
 
-    return res.status(200).json({ message: 'Document archived successfully' });
+    // 2. Extract storage path and delete from Supabase Storage
+    if (document.file_url) {
+      const urlParts = document.file_url.split('/documents/');
+      if (urlParts.length >= 2) {
+        const storagePath = decodeURIComponent(urlParts[1].split('?')[0]);
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove([storagePath]);
+        
+        if (storageError) {
+          console.error('Failed to delete file from storage:', storageError);
+          // We can proceed to delete the DB record even if storage deletion fails, 
+          // or we can halt. Usually, it's better to log it and continue cleaning the DB.
+        }
+      }
+    }
+
+    // 3. Delete child records to prevent foreign key issues (if cascade isn't configured)
+    await supabase.from('document_results').delete().eq('document_id', id);
+    await supabase.from('document_insights').delete().eq('document_id', id);
+    await supabase.from('chat_messages').delete().eq('document_id', id);
+
+    // 4. Delete parent document record
+    const { error: deleteError } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (deleteError) {
+       throw deleteError;
+    }
+
+    return res.status(200).json({ message: 'Document deleted successfully' });
   } catch (error) {
     console.error('Error deleting document:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -384,15 +417,31 @@ const transformDocument = async (req, res) => {
     const arrayBuffer = await fileData.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    const { identifyTransformationIntent } = require('../services/gemini/geminiService');
-    const { transformPdf } = require('../services/documents/pdfTransformService');
+    const { transformDocumentContent } = require('../services/gemini/geminiService');
+    const { applyTransformActions } = require('../services/documents/pdfTransformService');
 
-    // 1. Identify Intent via Gemini
-    const intentResult = await identifyTransformationIntent(instruction);
-    const operation = intentResult.success ? intentResult.operation : 'OTHER';
+    const hasImage = !!req.file;
 
-    // 2. Actually modify the PDF
-    const transformedBuffer = await transformPdf(fileBuffer, operation, instruction);
+    // 1. Get Transformation JSON actions from Gemini
+    const transformResult = await transformDocumentContent(fileBuffer, document.mime_type, instruction, hasImage);
+    
+    if (!transformResult.success) {
+      if (transformResult.error && transformResult.error.includes('limit has been reached')) {
+         return res.status(429).json({ error: transformResult.error });
+      }
+      return res.status(500).json({ error: transformResult.error || 'Failed to transform document' });
+    }
+
+    // 2. Apply transformations using pdf-lib on the ORIGINAL PDF buffer
+    let imageBuffer = null;
+    if (req.file) {
+      const fs = require('fs');
+      imageBuffer = fs.readFileSync(req.file.path);
+      // Clean up the uploaded image from temp storage
+      fs.unlinkSync(req.file.path);
+    }
+
+    const transformedBuffer = await applyTransformActions(fileBuffer, transformResult.data.actions, imageBuffer);
 
     // 3. Create a new file in storage
     const filename = `transformed-${Date.now()}.pdf`;

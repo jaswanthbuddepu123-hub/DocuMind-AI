@@ -29,7 +29,7 @@ const register = async (req, res) => {
     const { data: newUser, error: insertError } = await supabase
       .from('users')
       .insert([{ name, email, password_hash: passwordHash }])
-      .select('id, name, email')
+      .select('id, name, email, created_at')
       .single();
 
     if (insertError) {
@@ -56,7 +56,7 @@ const login = async (req, res) => {
 
     const { data: user, error: fetchError } = await supabase
       .from('users')
-      .select('id, name, email, password_hash')
+      .select('id, name, email, password_hash, created_at')
       .eq('email', email)
       .maybeSingle();
 
@@ -94,7 +94,7 @@ const me = async (req, res) => {
 
     const { data: user, error: fetchError } = await supabase
       .from('users')
-      .select('id, name, email')
+      .select('id, name, email, phone_number, avatar_url, created_at')
       .eq('id', userId)
       .maybeSingle();
 
@@ -114,8 +114,74 @@ const me = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  const fs = require('fs');
+  const crypto = require('crypto');
+  try {
+    const { userId } = req.user;
+    const { name, phone_number } = req.body;
+    let avatar_url = undefined;
+
+    // Handle avatar upload if present
+    if (req.file) {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileExt = req.file.originalname.split('.').pop();
+      const uniqueFilename = `${userId}-${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(uniqueFilename, fileBuffer, {
+          contentType: req.file.mimetype,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Avatar upload error:', uploadError);
+        fs.unlinkSync(req.file.path);
+        return res.status(500).json({ error: 'Failed to upload avatar image' });
+      }
+
+      const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(uniqueFilename);
+      avatar_url = publicUrlData.publicUrl;
+      
+      fs.unlinkSync(req.file.path);
+    }
+
+    const updates = {};
+    if (name) updates.name = name;
+    if (phone_number !== undefined) updates.phone_number = phone_number;
+    if (avatar_url) updates.avatar_url = avatar_url;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', userId)
+      .select('id, name, email, phone_number, avatar_url, created_at')
+      .single();
+
+    if (updateError) {
+      console.error('User update error:', updateError);
+      return res.status(500).json({ error: 'Failed to update profile' });
+    }
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error in updateProfile:', error);
+    if (req.file) {
+       const fs = require('fs');
+       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    }
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   register,
   login,
-  me
+  me,
+  updateProfile
 };

@@ -3,7 +3,7 @@ import { Bot, User, Send, Zap, MessageSquare, ChevronRight, ChevronLeft } from '
 import { chatWithDocument, getChatHistory, listDocuments } from '../services/documentService';
 
 const FloatingAIAssistant = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([{ role: 'ai', content: 'Hello! Select a document and ask me anything about it.' }]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [chatDocumentId, setChatDocumentId] = useState('');

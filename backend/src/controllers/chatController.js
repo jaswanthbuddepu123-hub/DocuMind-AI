@@ -57,6 +57,9 @@ const handleChat = async (req, res) => {
     const result = await chatWithDocument(fileBuffer, document.mime_type, message, history);
     
     if (!result.success) {
+      if (result.error && result.error.includes('limit has been reached')) {
+        return res.status(429).json({ error: result.error });
+      }
       return res.status(500).json({ error: result.error });
     }
 

@@ -68,7 +68,13 @@ export const retryDocument = async (id) => {
   return response.data;
 };
 
-export const transformDocument = async (id, instruction) => {
-  const response = await apiClient.post(`/api/documents/${id}/transform`, { instruction });
+export const transformDocument = async (id, instruction, imageFile = null) => {
+  const formData = new FormData();
+  formData.append('instruction', instruction);
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+
+  const response = await apiClient.post(`/api/documents/${id}/transform`, formData);
   return response.data;
 };

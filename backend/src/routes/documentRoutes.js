@@ -15,7 +15,7 @@ router.get('/:id', documentController.getDocumentById);
 router.get('/:id/download', documentController.downloadDocument);
 router.patch('/:id', documentController.updateDocumentResult);
 router.post('/:id/retry', documentController.retryDocument);
-router.post('/:id/transform', documentController.transformDocument);
+router.post('/:id/transform', upload.single('image'), documentController.transformDocument);
 router.delete('/:id', documentController.deleteDocument);
 
 module.exports = router;

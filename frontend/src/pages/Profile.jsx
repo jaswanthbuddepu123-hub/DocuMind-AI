@@ -2,13 +2,46 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getStats } from '../services/documentService';
-import { User, Mail, Calendar, Shield, LogOut, CheckCircle2, Clock, XCircle, FileText, Settings, RefreshCw, Moon, Sun } from 'lucide-react';
+import { User, Mail, Calendar, Shield, LogOut, CheckCircle2, Clock, XCircle, FileText, Settings, RefreshCw, Moon, Sun, Edit3, Phone, Camera, Save } from 'lucide-react';
+import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
+import { dataURLtoFile } from '../utils/fileUtils';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { user, logout, updateProfile } = useAuth();
+  const { theme, toggleTheme, isCompact, toggleCompact } = useTheme();
   const [stats, setStats] = useState({ total: 0, completed: 0, processing: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', phone_number: '' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  // Advanced Image Editor State
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editorSource, setEditorSource] = useState(null);
+  const [originalFilename, setOriginalFilename] = useState('avatar.jpg');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setOriginalFilename(file.name);
+      setEditorSource(URL.createObjectURL(file));
+      setIsEditorOpen(true);
+    }
+    e.target.value = null; // reset so same file can be selected again
+  };
+
+  const handleEditCurrentImage = (e) => {
+    e.preventDefault();
+    if (avatarFile) {
+      setEditorSource(URL.createObjectURL(avatarFile));
+      setIsEditorOpen(true);
+    } else if (user?.avatar_url) {
+      setEditorSource(user.avatar_url);
+      setIsEditorOpen(true);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -25,6 +58,24 @@ const Profile = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setEditForm({ name: user.name || '', phone_number: user.phone_number || '' });
+    }
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    const result = await updateProfile(editForm.name, editForm.phone_number, avatarFile);
+    setSaving(false);
+    if (result.success) {
+      setIsEditing(false);
+      setAvatarFile(null);
+    } else {
+      alert(result.error);
+    }
+  };
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -44,28 +95,81 @@ const Profile = () => {
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-600 to-indigo-700"></div>
             
-            <div className="relative mt-8 mb-4">
-              <div className="w-28 h-28 bg-white rounded-full mx-auto p-1.5 shadow-md">
-                <div className="w-full h-full bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl font-bold">
-                  {getInitials(user?.name)}
-                </div>
+            <div className="relative mt-8 mb-4 flex flex-col items-center gap-4">
+              <div className="w-28 h-28 bg-white rounded-full p-1.5 shadow-md relative shrink-0">
+                {user?.avatar_url || avatarFile ? (
+                  <img src={avatarFile ? URL.createObjectURL(avatarFile) : user.avatar_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl font-bold">
+                    {getInitials(user?.name)}
+                  </div>
+                )}
               </div>
+                
+              {isEditing && (
+                <div className="flex items-center justify-center gap-3">
+                  {(user?.avatar_url || avatarFile) && (
+                    <button type="button" onClick={handleEditCurrentImage} className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-full text-xs font-semibold transition-colors border border-blue-100">
+                      <Edit3 size={14} />
+                      Edit Photo
+                    </button>
+                  )}
+                  <label className="cursor-pointer flex items-center gap-1.5 px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold transition-colors shadow-sm">
+                    <Camera size={14} />
+                    Upload New
+                    <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={handleFileChange} />
+                  </label>
+                </div>
+              )}
             </div>
             
-            <h2 className="text-xl font-bold text-gray-900">{user?.name || 'User'}</h2>
-            <p className="text-gray-500 text-sm mb-6 flex items-center justify-center gap-1.5 mt-1">
-              <Mail size={14} /> {user?.email}
-            </p>
+            {isEditing ? (
+              <div className="text-left space-y-4 mb-6">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Phone Number</label>
+                  <input type="text" value={editForm.phone_number} onChange={(e) => {
+                    const onlyNums = e.target.value.replace(/\D/g, '');
+                    setEditForm({...editForm, phone_number: onlyNums});
+                  }} maxLength={10} placeholder="1234567890" className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center justify-center gap-2">
+                  {user?.name || 'User'}
+                </h2>
+                <div className="text-gray-500 text-sm mb-6 flex flex-col items-center gap-2 mt-2">
+                  <span className="flex items-center gap-1.5"><Mail size={14} /> {user?.email}</span>
+                  {user?.phone_number && <span className="flex items-center gap-1.5"><Phone size={14} /> {user.phone_number}</span>}
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col gap-3">
-              <button onClick={fetchStats} className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
-                <RefreshCw size={16} className={loading ? "animate-spin text-blue-600" : ""} />
-                Refresh Profile
-              </button>
-              <button onClick={logout} className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
-                <LogOut size={16} />
-                Sign Out
-              </button>
+              {isEditing ? (
+                <>
+                  <button onClick={handleSaveProfile} disabled={saving} className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-70">
+                    {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+                    {saving ? 'Saving...' : 'Save Profile'}
+                  </button>
+                  <button onClick={() => { setIsEditing(false); setAvatarFile(null); }} className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center text-sm">
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setIsEditing(true)} className="w-full py-2.5 px-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
+                    <Edit3 size={16} /> Edit Profile
+                  </button>
+                  <button onClick={logout} className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
+                    <LogOut size={16} /> Sign Out
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -87,7 +191,13 @@ const Profile = () => {
                <div className="flex justify-between items-center">
                  <span className="text-gray-600 text-sm flex items-center gap-2"><Calendar size={14}/> Joined</span>
                  <span className="text-gray-900 text-sm font-medium">
-                   {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Recently'}
+                   {user?.created_at ? new Date(user.created_at).toLocaleString(undefined, { 
+                     year: 'numeric', 
+                     month: 'short', 
+                     day: 'numeric', 
+                     hour: '2-digit', 
+                     minute: '2-digit' 
+                   }) : 'Recently'}
                  </span>
                </div>
             </div>
@@ -192,7 +302,7 @@ const Profile = () => {
                   <p className="text-sm text-gray-500">Show more documents per page in lists</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" value="" className="sr-only peer" />
+                  <input type="checkbox" checked={isCompact} onChange={toggleCompact} className="sr-only peer" />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
@@ -201,6 +311,37 @@ const Profile = () => {
           
         </div>
       </div>
+
+      {/* Advanced Image Editor Modal */}
+      {isEditorOpen && editorSource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-10">
+          <div className="w-full h-full max-w-6xl max-h-[800px] bg-white rounded-xl overflow-hidden shadow-2xl relative">
+            <FilerobotImageEditor
+              source={editorSource}
+              onSave={(editedImageObject, designState) => {
+                const newFile = dataURLtoFile(editedImageObject.imageBase64, `edited_${originalFilename}`);
+                setAvatarFile(newFile);
+                setIsEditorOpen(false);
+                setEditorSource(null);
+              }}
+              onClose={() => {
+                setIsEditorOpen(false);
+                setEditorSource(null);
+              }}
+              annotationsCommon={{
+                fill: '#000000',
+              }}
+              Text={{ text: 'Add Text...' }}
+              translations={{
+                save: 'Apply Image',
+              }}
+              tabsIds={[TABS.ADJUST, TABS.ANNOTATE, TABS.WATERMARK, TABS.FILTERS, TABS.FINETUNE]}
+              defaultTabId={TABS.ADJUST}
+              defaultToolId={TOOLS.CROP}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

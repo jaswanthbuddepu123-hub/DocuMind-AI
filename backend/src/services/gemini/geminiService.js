@@ -1,16 +1,17 @@
 const ai = require('./geminiClient');
 const { extractionSchema } = require('../../schemas/extractionSchema');
 const { chatSchema } = require('../../schemas/chatSchema');
+const { transformSchema } = require('../../schemas/transformSchema');
 
 const analyzeDocument = async (fileBuffer, mimeType) => {
   try {
     const prompt = `You are a highly capable document intelligence system.
 Analyze the provided document and perform the following tasks:
 1. Document classification
-2. Field extraction (e.g. vendorName, invoiceNumber, invoiceDate, dueDate, subtotal, tax, total, etc. depending on documentType)
-3. Extract all line items
-4. Validate internal consistency (e.g. does subtotal + tax equal total?)
-5. Generate short actionable insights based on the document contents.
+2. Field extraction: Extract structured fields dynamically based on the actual document type (e.g. vendorName, invoiceNumber, dueDate for invoices, merchantName, total for receipts).
+3. Line items: If the document contains a table or list of items, extract them into 'lineItems' (description, quantity, unitPrice, amount). If none exist, return an empty array. Do not invent line items.
+4. Validation: Validate internal consistency based ONLY on extracted data (e.g., does subtotal + tax equal total? Are important fields missing?).
+5. Insights: Generate useful insights based ONLY on the uploaded document (e.g., important dates, high-value amounts, missing info). Do not generate generic insights.
 
 You MUST respond ONLY with a raw JSON object exactly matching this structure. Do not use markdown fences (no \`\`\`json) and include no prose:
 {
@@ -24,21 +25,37 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
   "insights": ["insight 1", "insight 2"]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: [
-        {
-          inlineData: {
-            data: fileBuffer.toString('base64'),
-            mimeType: mimeType
+    let response;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: [
+            {
+              inlineData: {
+                data: fileBuffer.toString('base64'),
+                mimeType: mimeType
+              }
+            },
+            prompt
+          ],
+          config: {
+            responseMimeType: 'application/json'
           }
-        },
-        prompt
-      ],
-      config: {
-        responseMimeType: 'application/json'
+        });
+        break;
+      } catch (err) {
+        if (err.status === 429 || err.status === 503 || (err.message && (err.message.includes('429') || err.message.includes('503')))) {
+          retries -= 1;
+          if (retries === 0) throw err;
+          console.log(`AI Service unavailable or rate limited, waiting 10 seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        } else {
+          throw err;
+        }
       }
-    });
+    }
 
     const rawJson = response.text;
 
@@ -54,7 +71,9 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
   } catch (error) {
     console.error('Gemini processing error:', error);
     let errorMsg = error.message || 'Failed to process document';
-    if (errorMsg.includes('fetch failed') || errorMsg.includes('timeout')) {
+    if (error.status === 429 || error.status === 503 || (error.message && (error.message.includes('429') || error.message.includes('503') || error.message.includes('quota')))) {
+      errorMsg = 'AI service is currently busy or rate limited. Please try again in a few moments.';
+    } else if (errorMsg.includes('fetch failed') || errorMsg.includes('timeout')) {
       errorMsg = 'AI Service connection timeout. Please try again later.';
     }
     return { success: false, error: errorMsg };
@@ -111,13 +130,29 @@ ${message}`;
       parts: [{ text: prompt }]
     });
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: chatContents,
-      config: {
-        responseMimeType: 'application/json'
+    let response;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: chatContents,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+        break;
+      } catch (err) {
+        if (err.status === 429 || err.status === 503 || (err.message && (err.message.includes('429') || err.message.includes('503')))) {
+          retries -= 1;
+          if (retries === 0) throw err;
+          console.log(`AI Service unavailable or rate limited, waiting 10 seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        } else {
+          throw err;
+        }
       }
-    });
+    }
 
     const rawJson = response.text;
     const cleanJson = rawJson.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
@@ -128,85 +163,94 @@ ${message}`;
     return { success: true, data: validatedData };
   } catch (error) {
     console.error('Gemini chat error:', error);
+    if (error.status === 429 || error.status === 503 || (error.message && (error.message.includes('429') || error.message.includes('503') || error.message.includes('quota')))) {
+      return { success: false, error: 'AI service is currently busy or rate limited. Please try again in a few moments.' };
+    }
     return { success: false, error: error.message || 'Failed to chat with document' };
   }
 };
 
-const transformDocumentContent = async (fileBuffer, mimeType, instruction) => {
+const transformDocumentContent = async (fileBuffer, mimeType, instruction, hasImage) => {
   try {
-    const prompt = `You are an AI document transformation tool.
-The user wants to transform this document based on the following instruction:
-"${instruction}"
+    const prompt = `You are a Visual PDF Editor AI.
+The user wants to physically draw on or manipulate this document visually.
+A standard PDF page is roughly X: 600 points wide and Y: 842 points tall.
+X=0 is the left edge. Y=0 is the BOTTOM edge. Y=842 is the TOP edge.
 
-Output the transformed document text. Do not wrap it in markdown blockquotes unless specifically asked. Do not add conversational intro/outro text, just output the raw transformed content.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: [
-        {
-          inlineData: {
-            data: fileBuffer.toString('base64'),
-            mimeType: mimeType
-          }
-        },
-        prompt
-      ]
-    });
-
-    return { success: true, text: response.text };
-  } catch (error) {
-    console.error('Gemini transform error:', error);
-    return { success: false, error: error.message || 'Failed to transform document' };
-  }
-};
-
-const identifyTransformationIntent = async (instruction) => {
-  try {
-    const prompt = `You are a Document Transformation Analyzer.
-Analyze the following user instruction for modifying a PDF document.
-Determine the core operation requested.
-Valid operations are: 'REMOVE_IMAGES', 'APPEND_TEXT', 'EXTRACT_TEXT', 'SUMMARIZE', 'OTHER'.
-
-Return ONLY a JSON object with this exact structure:
+You MUST respond ONLY with a raw JSON object exactly matching this structure. Do not use markdown fences (no \`\`\`json) and include no prose.
 {
-  "operation": "APPEND_TEXT",
-  "explanation": "Brief explanation of what will be done"
+  "actions": [
+    {
+      "type": "addText" | "addImage" | "redact" | "erase",
+      "text": "The text to draw (if addText)",
+      "x": 300,
+      "y": 421,
+      "width": 200,
+      "height": 100,
+      "page": 1
+    }
+  ]
 }
 
-User instruction: "${instruction}"
-`;
+RULES:
+- 'addImage' should ONLY be used if the user requested to add an image (hasImage=${hasImage}).
+- 'redact' draws a black box over coordinates to hide sensitive information.
+- 'erase' draws a WHITE box over coordinates to visually delete or erase content or images from the PDF. ALWAYS use this when the user asks to "delete" or "remove" something. Use a large width and height (e.g., width: 300, height: 100) if they don't specify, to ensure it covers the area.
+- 'addText' writes new text on top of the PDF.
+- Calculate approximate coordinates based on the user's natural language (e.g. "top right" -> X=450, Y=750. "middle" -> X=300, Y=421. "bottom" -> Y=50). If unsure, guess reasonable coordinates based on the description.
 
-    const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: prompt
-    });
+User Instruction: "${instruction}"`;
 
-    const text = result.text;
+    let response;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: [
+            {
+              inlineData: {
+                data: fileBuffer.toString('base64'),
+                mimeType: mimeType
+              }
+            },
+            prompt
+          ],
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+        break; // Success, exit loop
+      } catch (err) {
+        if (err.status === 429 || err.status === 503 || (err.message && (err.message.includes('429') || err.message.includes('503')))) {
+          retries -= 1;
+          if (retries === 0) throw err;
+          console.log(`AI Service unavailable or rate limited, waiting 10 seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        } else {
+          throw err;
+        }
+      }
+    }
 
-    const cleanJson = text
-      .replace(/^```json\s*/i, '')
-      .replace(/\s*```$/i, '');
+    const rawJson = response.text;
+    const cleanJson = rawJson.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+    const parsedData = JSON.parse(cleanJson);
 
-    const data = JSON.parse(cleanJson);
+    const validatedData = transformSchema.parse(parsedData);
 
-    return {
-      success: true,
-      operation: data.operation || 'OTHER'
-    };
-
+    return { success: true, data: validatedData };
   } catch (error) {
-    console.error('Intent identification error:', error);
-
-    return {
-      success: false,
-      operation: 'OTHER'
-    };
+    console.error('Gemini transform error:', error);
+    if (error.status === 429 || (error.message && error.message.includes('429')) || (error.message && error.message.includes('quota'))) {
+      return { success: false, error: 'AI service request limit has been reached. Please try again in a few moments.' };
+    }
+    return { success: false, error: error.message || 'Failed to transform document' };
   }
 };
 
 module.exports = {
   analyzeDocument,
   chatWithDocument,
-  transformDocumentContent,
-  identifyTransformationIntent
+  transformDocumentContent
 };
