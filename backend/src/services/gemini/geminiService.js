@@ -71,12 +71,12 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
   } catch (error) {
     console.error('Gemini processing error:', error);
     let errorMsg = error.message || 'Failed to process document';
-    
-    // Always include the raw error message so we know exactly what is failing on Render
-    errorMsg = `Gemini API Error: ${errorMsg}`;
-
-    if (error.status === 429 || error.status === 503) {
-      errorMsg = `Rate Limited / Busy: ${errorMsg}`;
+    if (error.status === 429 || (error.message && (error.message.includes('429') || error.message.includes('quota') || error.message.includes('RESOURCE_EXHAUSTED')))) {
+      errorMsg = 'AI service quota exceeded. Please try again later or contact support.';
+    } else if (error.status === 503 || (error.message && error.message.includes('503'))) {
+      errorMsg = 'AI service is temporarily unavailable. Please try again in a few moments.';
+    } else if (errorMsg.includes('fetch failed') || errorMsg.includes('timeout')) {
+      errorMsg = 'AI Service connection timeout. Please try again later.';
     }
     return { success: false, error: errorMsg };
   }
