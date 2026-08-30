@@ -30,7 +30,7 @@ You MUST respond ONLY with a raw JSON object exactly matching this structure. Do
     while (retries > 0) {
       try {
         response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.5-flash',
           contents: [
             {
               inlineData: {
@@ -135,7 +135,7 @@ ${message}`;
     while (retries > 0) {
       try {
         response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.5-flash',
           contents: chatContents,
           config: {
             responseMimeType: 'application/json'
@@ -206,7 +206,7 @@ User Instruction: "${instruction}"`;
     while (retries > 0) {
       try {
         response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
+          model: 'gemini-2.5-flash',
           contents: [
             {
               inlineData: {
