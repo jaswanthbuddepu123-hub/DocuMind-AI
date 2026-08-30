@@ -4,6 +4,7 @@ const supabase = require('../services/supabase/supabaseClient');
 const { extractionSchema } = require('../schemas/extractionSchema');
 
 const uploadHandler = async (req, res) => {
+  console.log('UPLOAD HIT!');
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
