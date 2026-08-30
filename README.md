@@ -1,6 +1,8 @@
 🌐 Live Application
 
-🔗 Frontend: https://docu-mind-ai-orpin.vercel.app 🔗 Backend Health Check: https://documind-ai-5xcf.onrender.com/api/health 🎥 Demo Video: [add link once recorded]
+🔗 Frontend: https://docu-mind-ai-orpin.vercel.app
+🔗 Backend Health Check: https://documind-ai-5xcf.onrender.com/api/health 
+🎥 Demo Video: [add link once recorded]
 
 📌 Problem Statement
 
