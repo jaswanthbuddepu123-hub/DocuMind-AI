@@ -176,30 +176,30 @@ const DocumentDetail = () => {
           <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-600 dark:text-blue-400 rounded-2xl shadow-inner border border-white dark:border-gray-800">
             <FileText size={32} />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {isRenaming ? (
-              <div className="flex items-center gap-2 max-w-lg">
+              <div className="flex items-center gap-2 max-w-full">
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-lg font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-0 px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-lg font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleRename();
                     if (e.key === 'Escape') setIsRenaming(false);
                   }}
                 />
-                <button onClick={handleRename} disabled={isSavingName} className="p-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">
+                <button onClick={handleRename} disabled={isSavingName} className="p-1.5 shrink-0 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">
                    {isSavingName ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                 </button>
-                <button onClick={() => setIsRenaming(false)} disabled={isSavingName} className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                <button onClick={() => setIsRenaming(false)} disabled={isSavingName} className="p-1.5 shrink-0 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
                    <X size={18} />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3 group">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate max-w-lg" title={document.original_filename}>{document.original_filename}</h1>
+              <div className="flex items-center gap-3 group min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate" title={document.original_filename}>{document.original_filename}</h1>
                 <button 
                   onClick={() => {
                     setNewName(document.original_filename);
