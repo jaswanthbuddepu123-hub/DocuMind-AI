@@ -471,7 +471,7 @@ const transformDocument = async (req, res) => {
       fs.unlinkSync(req.file.path);
     }
 
-    const transformedBuffer = await applyTransformActions(fileBuffer, transformResult.data.actions, imageBuffer);
+    const transformedBuffer = await applyTransformActions(fileBuffer, document.mime_type, transformResult.data.actions, imageBuffer);
 
     // 3. Create a new file in storage
     const filename = `transformed-${Date.now()}.pdf`;

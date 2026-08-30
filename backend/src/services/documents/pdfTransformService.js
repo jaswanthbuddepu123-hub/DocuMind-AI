@@ -1,8 +1,30 @@
 const { PDFDocument, rgb } = require('pdf-lib');
 
-const applyTransformActions = async (originalPdfBuffer, actions, imageBuffer = null) => {
+const applyTransformActions = async (originalBuffer, mimeType, actions, imageBuffer = null) => {
   try {
-    const pdfDoc = await PDFDocument.load(originalPdfBuffer);
+    let pdfDoc;
+    
+    // Check if the original document is an image
+    if (mimeType && mimeType.startsWith('image/')) {
+      pdfDoc = await PDFDocument.create();
+      let embeddedImage;
+      if (mimeType === 'image/png') {
+        embeddedImage = await pdfDoc.embedPng(originalBuffer);
+      } else {
+        embeddedImage = await pdfDoc.embedJpg(originalBuffer);
+      }
+      const page = pdfDoc.addPage([embeddedImage.width, embeddedImage.height]);
+      page.drawImage(embeddedImage, {
+        x: 0,
+        y: 0,
+        width: embeddedImage.width,
+        height: embeddedImage.height,
+      });
+    } else {
+      // Assume PDF
+      pdfDoc = await PDFDocument.load(originalBuffer);
+    }
+
     const pages = pdfDoc.getPages();
 
     for (const action of actions) {
