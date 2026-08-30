@@ -101,17 +101,18 @@ const Upload = () => {
   return (
     <div className="pb-10 max-w-3xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Document</h1>
-        <p className="text-gray-500">Extract intelligent insights instantly using Gemini AI.</p>
+        <h1 className="text-3xl font-bold text-slate-100 mb-2">Upload Document</h1>
+        <p className="text-slate-400">Extract intelligent insights instantly using Gemini AI.</p>
       </div>
 
       {status === 'idle' && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="glass-panel rounded-[2.5rem] p-8 relative overflow-hidden group">
+          <div className={`absolute inset-0 bg-indigo-500/5 mix-blend-screen transition-opacity duration-500 pointer-events-none ${dragActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
           <div 
-            className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 cursor-pointer ${
+            className={`relative border-2 border-dashed rounded-[2rem] p-16 text-center transition-all duration-500 cursor-pointer overflow-hidden ${
               dragActive 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_50px_rgba(99,102,241,0.2)] scale-[1.02]' 
+                : 'border-indigo-500/30 hover:border-indigo-400 hover:bg-indigo-500/5 hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -119,6 +120,9 @@ const Upload = () => {
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
           >
+            {/* Background glowing orb in dropzone */}
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/20 rounded-full mix-blend-screen filter blur-[50px] transition-opacity duration-500 pointer-events-none ${dragActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
+            
             <input 
               ref={inputRef}
               type="file" 
@@ -127,22 +131,22 @@ const Upload = () => {
               className="hidden" 
             />
             
-            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <UploadCloud size={32} />
+            <div className={`w-24 h-24 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10 transition-transform duration-500 shadow-[0_0_30px_rgba(99,102,241,0.2)] ${dragActive ? 'scale-110' : 'group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white'}`}>
+              <UploadCloud size={48} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">
-              Click or drag document here
+            <h3 className="text-2xl font-black text-white mb-2 relative z-10 tracking-tight">
+              {dragActive ? 'Drop it here!' : 'Click or drag document here'}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-slate-400 mb-8 font-medium relative z-10">
               Support for PDF, JPG, and PNG (Max 10MB)
             </p>
-            <button className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium py-2 px-6 rounded-lg shadow-sm transition-colors">
+            <button className="relative z-10 bg-white/10 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-2xl shadow-sm transition-all duration-300 border border-white/10 hover:border-transparent hover:shadow-[0_0_20px_rgba(99,102,241,0.5)]">
               Browse Files
             </button>
           </div>
 
           {error && (
-            <div className="mt-6 flex items-start gap-3 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
+            <div className="mt-6 flex items-start gap-3 p-4 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20">
               <AlertCircle size={20} className="shrink-0 mt-0.5" />
               <p className="text-sm font-medium">{error}</p>
             </div>
@@ -150,24 +154,24 @@ const Upload = () => {
 
           {file && (
             <div className="mt-6">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <div className="flex items-center justify-between p-4 glass-panel rounded-xl">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white shadow-sm rounded-lg text-blue-600">
+                  <div className="glass-card p-3 rounded-lg text-indigo-400 border-none">
                     <File size={24} />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 truncate max-w-xs">{file.name}</p>
-                    <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <p className="font-semibold text-slate-100 truncate max-w-xs">{file.name}</p>
+                    <p className="text-xs text-slate-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setFile(null); }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); setFile(null); }} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
                   <X size={20} />
                 </button>
               </div>
               
               <button 
                 onClick={handleUpload}
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                className="w-full mt-6 bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3.5 px-4 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
               >
                 Upload & Analyze
                 <ChevronRight size={18} />
@@ -178,34 +182,34 @@ const Upload = () => {
       )}
 
       {(status === 'uploading' || status === 'processing') && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center">
+        <div className="glass-panel rounded-3xl p-12 text-center">
            <div className="relative w-24 h-24 mx-auto mb-8">
-              <div className="absolute inset-0 rounded-full border-4 border-gray-100"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-white/10"></div>
               {status === 'uploading' ? (
                 <div 
-                  className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
+                  className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"
                 ></div>
               ) : (
-                <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
               )}
-              <div className="absolute inset-0 flex items-center justify-center text-blue-600">
-                {status === 'uploading' ? <UploadCloud size={32} /> : <RefreshCw size={32} className="animate-pulse text-indigo-600" />}
+              <div className="absolute inset-0 flex items-center justify-center text-indigo-500">
+                {status === 'uploading' ? <UploadCloud size={32} /> : <RefreshCw size={32} className="animate-pulse text-indigo-400" />}
               </div>
            </div>
            
-           <h3 className="text-xl font-bold text-gray-900 mb-2">
+           <h3 className="text-xl font-bold text-slate-100 mb-2">
              {status === 'uploading' ? 'Uploading Document...' : 'Processing with AI...'}
            </h3>
-           <p className="text-gray-500 max-w-md mx-auto mb-6">
+           <p className="text-slate-400 max-w-md mx-auto mb-6">
              {status === 'uploading' 
                ? `Transferring secure payload (${uploadProgress}%)` 
                : 'Gemini is classifying the document, extracting fields, and verifying internal consistency.'}
            </p>
 
            {status === 'uploading' && (
-             <div className="w-full max-w-md mx-auto bg-gray-100 rounded-full h-2 overflow-hidden">
+             <div className="w-full max-w-md mx-auto bg-white/10 rounded-full h-2 overflow-hidden">
                <div 
-                 className="bg-blue-600 h-full transition-all duration-300"
+                 className="bg-indigo-500 h-full transition-all duration-300 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
                  style={{ width: `${uploadProgress}%` }}
                ></div>
              </div>
@@ -214,29 +218,29 @@ const Upload = () => {
       )}
 
       {status === 'success' && result && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="glass-panel rounded-3xl p-8 text-center animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
             <CheckCircle2 size={40} />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete!</h3>
-          <p className="text-gray-500 mb-8">DocuMind successfully extracted structured data.</p>
+          <h3 className="text-2xl font-bold text-slate-100 mb-2">Analysis Complete!</h3>
+          <p className="text-slate-400 mb-8">DocuMind successfully extracted structured data.</p>
           
-          <div className="max-w-md mx-auto bg-gray-50 rounded-2xl p-6 text-left border border-gray-200 mb-8">
-             <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-200">
-               <div className="p-3 bg-white shadow-sm rounded-xl text-blue-600">
+          <div className="max-w-md mx-auto glass-card rounded-2xl p-6 text-left border-white/10 mb-8">
+             <div className="flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
+               <div className="glass-card p-3 rounded-xl text-indigo-400 border-none">
                  <FileText size={24} />
                </div>
                <div className="min-w-0">
-                 <p className="font-semibold text-gray-900 truncate">{result.original_filename}</p>
-                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mt-1">
+                 <p className="font-semibold text-slate-100 truncate">{result.original_filename}</p>
+                 <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mt-1">
                    {result.document_type ? result.document_type.replace('_', ' ') : 'Unknown Type'}
                  </p>
                </div>
              </div>
              
              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">Status</span>
-                <span className="font-semibold text-green-600 flex items-center gap-1">
+                <span className="text-slate-400">Status</span>
+                <span className="font-semibold text-emerald-400 flex items-center gap-1">
                   <CheckCircle2 size={16} /> Completed
                 </span>
              </div>
@@ -245,13 +249,13 @@ const Upload = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <Link 
               to={`/app/documents/${result.id}`}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all text-center"
+              className="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 px-8 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all text-center hover:-translate-y-0.5"
             >
               View Extracted Details
             </Link>
             <button 
               onClick={resetState}
-              className="w-full sm:w-auto bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium py-3 px-8 rounded-xl shadow-sm transition-colors"
+              className="w-full sm:w-auto glass-panel text-slate-200 hover:bg-white/10 hover:text-white font-medium py-3 px-8 rounded-xl transition-all hover:-translate-y-0.5"
             >
               Upload Another
             </button>
@@ -260,18 +264,18 @@ const Upload = () => {
       )}
 
       {status === 'error' && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="glass-panel rounded-3xl p-8 text-center animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
             <AlertCircle size={40} />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Processing Failed</h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          <h3 className="text-2xl font-bold text-slate-100 mb-2">Processing Failed</h3>
+          <p className="text-slate-400 mb-6 max-w-md mx-auto">
             {error || 'An unexpected error occurred during processing.'}
           </p>
           
           <button 
             onClick={resetState}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 mx-auto"
+            className="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 px-8 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all flex items-center justify-center gap-2 mx-auto hover:-translate-y-0.5"
           >
             <RefreshCw size={18} />
             Try Again

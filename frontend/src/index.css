@@ -6,5 +6,43 @@
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 transition-colors duration-200 dark:bg-gray-900 dark:text-gray-100;
+  @apply bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30;
+  /* Premium dark background pattern */
+  background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 400px),
+                    radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.05), transparent 400px);
+  background-attachment: fixed;
+}
+
+@utility glass-panel {
+  @apply bg-slate-950/60 backdrop-blur-2xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
+}
+
+@utility glass-card {
+  @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.12] hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_10px_40px_-10px_rgba(99,102,241,0.2)];
+}
+
+@utility glow-text {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
+}
+
+/* Custom Keyframes for Orbs */
+@keyframes float {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@utility animate-float {
+  animation: float 15s ease-in-out infinite;
+}
+
+@utility animate-float-delayed {
+  animation: float 18s ease-in-out infinite;
+  animation-delay: -5s;
+}
+
+@utility animate-float-slow {
+  animation: float 25s ease-in-out infinite;
+  animation-delay: -10s;
 }

@@ -87,12 +87,12 @@ const Documents = () => {
     <div className="pb-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Documents</h1>
-          <p className="text-gray-500 mt-1 dark:text-gray-400">Manage and search through your processed files.</p>
+          <h1 className="text-2xl font-bold text-slate-100">My Documents</h1>
+          <p className="text-slate-400 mt-1">Manage and search through your processed files.</p>
         </div>
         <Link 
           to="/app/upload" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-md shadow-blue-500/20 flex items-center gap-2 shrink-0"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] flex items-center gap-2 shrink-0 hover:-translate-y-0.5"
         >
           <UploadCloud size={18} />
           Upload Document
@@ -100,9 +100,9 @@ const Documents = () => {
       </div>
 
       {/* Filters and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col lg:flex-row gap-4 justify-between items-center z-10 relative dark:bg-gray-900 dark:border-gray-800">
+      <div className="glass-panel p-4 rounded-2xl mb-6 flex flex-col lg:flex-row gap-4 justify-between items-center z-10 relative">
         <div className="w-full lg:w-1/3 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <Search size={18} />
           </div>
           <input
@@ -110,17 +110,17 @@ const Documents = () => {
             placeholder="Search filenames..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:bg-gray-800"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:bg-white/10 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all outline-none text-slate-100"
           />
         </div>
 
         <div className="w-full lg:w-auto flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 transition-colors hover:bg-white hover:border-blue-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800">
-            <Filter size={16} className="text-gray-400" />
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10 transition-colors hover:bg-white/10 hover:border-indigo-400">
+            <Filter size={16} className="text-slate-400" />
             <select 
               value={statusFilter} 
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full dark:text-gray-300"
+              className="bg-transparent text-sm font-medium text-slate-200 outline-none cursor-pointer w-full [&>option]:bg-slate-900"
             >
               <option value="">All Statuses</option>
               <option value="completed">Completed</option>
@@ -130,12 +130,12 @@ const Documents = () => {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 transition-colors hover:bg-white hover:border-blue-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800">
-            <Filter size={16} className="text-gray-400" />
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10 transition-colors hover:bg-white/10 hover:border-indigo-400">
+            <Filter size={16} className="text-slate-400" />
             <select 
               value={typeFilter} 
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full dark:text-gray-300"
+              className="bg-transparent text-sm font-medium text-slate-200 outline-none cursor-pointer w-full [&>option]:bg-slate-900"
             >
               <option value="">All Types</option>
               <option value="invoice">Invoice</option>
@@ -146,12 +146,12 @@ const Documents = () => {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 transition-colors hover:bg-white hover:border-blue-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-800">
-            <ArrowUpDown size={16} className="text-gray-400" />
+          <div className="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl border border-white/10 transition-colors hover:bg-white/10 hover:border-indigo-400">
+            <ArrowUpDown size={16} className="text-slate-400" />
             <select 
               value={sortOrder} 
               onChange={(e) => setSortOrder(e.target.value)}
-              className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer w-full dark:text-gray-300"
+              className="bg-transparent text-sm font-medium text-slate-200 outline-none cursor-pointer w-full [&>option]:bg-slate-900"
             >
               <option value="desc">Newest First</option>
               <option value="asc">Oldest First</option>
@@ -160,126 +160,118 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative dark:bg-gray-900 dark:border-gray-800">
+      {/* Document Grid */}
+      <div className="relative min-h-[400px]">
         {loading && documents.length === 0 ? (
-           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10 backdrop-blur-sm min-h-[400px] dark:bg-gray-900/80">
-             <Loader2 size={32} className="animate-spin text-blue-600" />
+           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 z-10 backdrop-blur-sm rounded-3xl">
+             <Loader2 size={32} className="animate-spin text-indigo-500" />
            </div>
         ) : error ? (
-           <div className="p-12 text-center text-red-600">
+           <div className="p-12 text-center text-red-400 glass-panel rounded-3xl">
              <p>{error}</p>
-             <button onClick={fetchDocs} className="mt-4 px-4 py-2 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors">Retry</button>
+             <button onClick={fetchDocs} className="mt-4 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-sm font-medium transition-colors">Retry</button>
            </div>
         ) : documents.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-gray-800">
-              <File size={32} />
+          <div className="p-16 text-center glass-panel rounded-3xl">
+            <div className="w-20 h-20 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(99,102,241,0.15)]">
+              <File size={40} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2 dark:text-white">No documents found</h3>
-            <p className="text-gray-500 max-w-sm mx-auto">
+            <h3 className="text-xl font-bold text-slate-100 mb-2">No documents found</h3>
+            <p className="text-slate-400 max-w-sm mx-auto">
               {search || statusFilter || typeFilter ? "Try adjusting your filters to find what you're looking for." : "You haven't uploaded any documents yet."}
             </p>
             {!(search || statusFilter || typeFilter) && (
-              <Link to="/app/upload" className="mt-6 inline-block text-blue-600 font-medium hover:text-blue-700">Go to Upload</Link>
+              <Link to="/app/upload" className="mt-8 inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:-translate-y-0.5">
+                <UploadCloud size={18} /> Upload Now
+              </Link>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100 dark:bg-gray-800/50 dark:border-gray-800">
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Document</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Classification</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Confidence</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploaded</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {documents.map((doc) => {
-                  // Handle PostgREST's return structure which could be an array of joined tables or single object
-                  const resData = Array.isArray(doc.document_results) ? doc.document_results[0] : doc.document_results;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {documents.map((doc, index) => {
+              // Handle PostgREST's return structure
+              const resData = Array.isArray(doc.document_results) ? doc.document_results[0] : doc.document_results;
+              
+              return (
+                <div 
+                  key={doc.id} 
+                  onClick={() => navigate(`/app/documents/${doc.id}`)}
+                  className="glass-card rounded-3xl p-6 cursor-pointer group flex flex-col relative overflow-hidden"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full mix-blend-screen filter blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                   
-                  return (
-                    <tr 
-                      key={doc.id} 
-                      onClick={() => navigate(`/app/documents/${doc.id}`)}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer group dark:hover:bg-gray-800/50"
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
+                      <File size={24} />
+                    </div>
+                    {getStatusBadge(doc.status)}
+                  </div>
+                  
+                  <div className="flex-1 relative z-10">
+                    <h3 className="font-bold text-slate-100 text-lg mb-1 line-clamp-1 group-hover:text-indigo-300 transition-colors">{doc.original_filename}</h3>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-4">
+                      {doc.document_type ? doc.document_type.replace('_', ' ') : 'Unclassified'} • {(doc.file_size / 1024).toFixed(0)} KB
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-auto border-t border-white/5 pt-4">
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Confidence</p>
+                        <p className="text-sm text-slate-200">{resData?.confidence ? `${(resData.confidence * 100).toFixed(0)}%` : '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Uploaded</p>
+                        <p className="text-sm text-slate-200">{new Date(doc.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mt-5 relative z-10">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); navigate(`/app/dashboard?documentId=${doc.id}`); }}
+                      className="flex-1 bg-white/5 hover:bg-indigo-500 hover:text-white text-indigo-400 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 text-center border border-white/10 hover:border-transparent shadow-sm hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
-                            <File size={18} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900 truncate max-w-[200px] dark:text-gray-100">{doc.original_filename}</p>
-                            <p className="text-xs text-gray-500">{(doc.file_size / 1024).toFixed(0)} KB</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 capitalize dark:text-gray-300">
-                        {doc.document_type ? doc.document_type.replace('_', ' ') : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(doc.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                        {resData?.confidence ? `${(resData.confidence * 100).toFixed(0)}%` : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right flex justify-end items-center gap-2">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); navigate(`/app/dashboard?documentId=${doc.id}`); }}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors dark:hover:bg-blue-900/30"
-                          title="Ask AI"
-                        >
-                          Ask AI
-                        </button>
-                        <button 
-                          onClick={(e) => handleArchive(e, doc.id, doc.original_filename)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors dark:hover:bg-red-900/30"
-                          title="Archive Document"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      Ask AI
+                    </button>
+                    <button 
+                      onClick={(e) => handleArchive(e, doc.id, doc.original_filename)}
+                      className="w-11 h-11 flex items-center justify-center bg-white/5 hover:bg-red-500 text-slate-400 hover:text-white rounded-xl transition-all duration-300 border border-white/10 hover:border-transparent hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                      title="Archive Document"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
         
         {loading && documents.length > 0 && (
-           <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
-              <Loader2 size={32} className="animate-spin text-blue-600" />
+           <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px] flex items-center justify-center z-20 rounded-3xl">
+              <Loader2 size={40} className="animate-spin text-indigo-500 drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
            </div>
         )}
       </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
-          <p className="text-sm text-gray-500">
-            Showing <span className="font-medium text-gray-900 dark:text-white">{(page - 1) * limit + 1}</span> to <span className="font-medium text-gray-900 dark:text-white">{Math.min(page * limit, totalCount)}</span> of <span className="font-medium text-gray-900 dark:text-white">{totalCount}</span> results
+        <div className="mt-6 flex justify-between items-center glass-panel p-4 rounded-xl">
+          <p className="text-sm text-slate-400">
+            Showing <span className="font-medium text-slate-100">{(page - 1) * limit + 1}</span> to <span className="font-medium text-slate-100">{Math.min(page * limit, totalCount)}</span> of <span className="font-medium text-slate-100">{totalCount}</span> results
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={18} />
             </button>
