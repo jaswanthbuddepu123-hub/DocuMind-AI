@@ -180,6 +180,36 @@ const updateDocumentResult = async (req, res) => {
   }
 };
 
+const renameDocument = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const { name } = req.body;
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    const { data: updatedDoc, error } = await supabase
+      .from('documents')
+      .update({ original_filename: name.trim() })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return res.status(404).json({ error: 'Document not found' });
+      throw error;
+    }
+
+    return res.status(200).json(updatedDoc);
+  } catch (error) {
+    console.error('Error renaming document:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 const deleteDocument = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -496,5 +526,6 @@ module.exports = {
   getGraphStats,
   downloadDocument,
   retryDocument,
-  transformDocument
+  transformDocument,
+  renameDocument
 };

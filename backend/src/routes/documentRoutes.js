@@ -14,6 +14,7 @@ router.get('/', documentController.listDocuments);
 router.get('/:id', documentController.getDocumentById);
 router.get('/:id/download', documentController.downloadDocument);
 router.patch('/:id', documentController.updateDocumentResult);
+router.patch('/:id/name', documentController.renameDocument);
 router.post('/:id/retry', documentController.retryDocument);
 router.post('/:id/transform', upload.single('image'), documentController.transformDocument);
 router.delete('/:id', documentController.deleteDocument);

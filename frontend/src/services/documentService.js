@@ -43,6 +43,11 @@ export const updateDocumentResult = async (id, data) => {
   return response.data;
 };
 
+export const renameDocument = async (id, name) => {
+  const response = await apiClient.patch(`/api/documents/${id}/name`, { name });
+  return response.data;
+};
+
 export const deleteDocument = async (id) => {
   const response = await apiClient.delete(`/api/documents/${id}`);
   return response.data;
