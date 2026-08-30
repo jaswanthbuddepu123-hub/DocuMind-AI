@@ -6,7 +6,7 @@
 
 🔗 **Frontend:** https://docu-mind-ai-orpin.vercel.app
 
-🎥 **Demo Video:** Add your 3–4 minute demo video link here
+🎥 **Demo Video:**
 
 ---
 
