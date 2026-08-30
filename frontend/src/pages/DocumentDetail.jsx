@@ -290,6 +290,38 @@ const DocumentDetail = () => {
                         // format camelCase to Title Case
                         const formattedKey = key.replace(/([A-Z])/g, ' $1').trim();
                         const capitalizedKey = formattedKey.charAt(0).toUpperCase() + formattedKey.slice(1);
+
+                        // Helper to render any value type nicely
+                        const renderValue = (val) => {
+                          if (val === null || val === undefined || val === '') {
+                            return <span className="text-gray-400 italic">Not found</span>;
+                          }
+                          if (Array.isArray(val)) {
+                            return (
+                              <ul className="list-disc list-inside space-y-1">
+                                {val.map((item, i) => (
+                                  <li key={i} className="text-sm">
+                                    {typeof item === 'object' && item !== null
+                                      ? Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(' | ')
+                                      : String(item)}
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          }
+                          if (typeof val === 'object') {
+                            return (
+                              <ul className="list-disc list-inside space-y-1">
+                                {Object.entries(val).map(([k, v]) => (
+                                  <li key={k} className="text-sm">
+                                    <span className="font-semibold capitalize">{k}:</span> {Array.isArray(v) ? v.join(', ') : String(v)}
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          }
+                          return <span>{String(val)}</span>;
+                        };
                         
                         return (
                           <div key={key}>
@@ -305,7 +337,7 @@ const DocumentDetail = () => {
                               />
                             ) : (
                               <div className="text-sm font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
-                                {value !== null && value !== '' ? String(value) : <span className="text-gray-400 italic">Not found</span>}
+                                {renderValue(value)}
                               </div>
                             )}
                           </div>
