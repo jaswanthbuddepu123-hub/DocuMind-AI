@@ -291,18 +291,18 @@ const DocumentDetail = () => {
                         const formattedKey = key.replace(/([A-Z])/g, ' $1').trim();
                         const capitalizedKey = formattedKey.charAt(0).toUpperCase() + formattedKey.slice(1);
 
-                        // Helper to render any value type nicely
-                        const renderValue = (val) => {
+                        // Fully recursive helper to render any value type nicely
+                        const renderValue = (val, depth = 0) => {
                           if (val === null || val === undefined || val === '') {
                             return <span className="text-gray-400 italic">Not found</span>;
                           }
                           if (Array.isArray(val)) {
                             return (
-                              <ul className="list-disc list-inside space-y-1">
+                              <ul className={`list-disc space-y-1 ${depth === 0 ? 'list-inside' : 'list-inside ml-4'}`}>
                                 {val.map((item, i) => (
                                   <li key={i} className="text-sm">
                                     {typeof item === 'object' && item !== null
-                                      ? Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(' | ')
+                                      ? renderValue(item, depth + 1)
                                       : String(item)}
                                   </li>
                                 ))}
@@ -311,10 +311,13 @@ const DocumentDetail = () => {
                           }
                           if (typeof val === 'object') {
                             return (
-                              <ul className="list-disc list-inside space-y-1">
+                              <ul className={`space-y-1 ${depth > 0 ? 'ml-4 border-l border-gray-200 dark:border-gray-700 pl-2 mt-1' : ''}`}>
                                 {Object.entries(val).map(([k, v]) => (
                                   <li key={k} className="text-sm">
-                                    <span className="font-semibold capitalize">{k}:</span> {Array.isArray(v) ? v.join(', ') : String(v)}
+                                    <span className="font-semibold capitalize">{k}:</span>{' '}
+                                    {typeof v === 'object' && v !== null
+                                      ? renderValue(v, depth + 1)
+                                      : String(v)}
                                   </li>
                                 ))}
                               </ul>
