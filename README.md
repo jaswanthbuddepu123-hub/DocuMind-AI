@@ -1,109 +1,171 @@
-# 📄 DocuMind AI
+🌐 Live Application
 
-> An AI-powered intelligent document processing platform that transforms unstructured documents into structured, actionable information.
+🔗 Frontend: https://docu-mind-ai-orpin.vercel.app 🔗 Backend Health Check: https://documind-ai-5xcf.onrender.com/api/health 🎥 Demo Video: [add link once recorded]
 
-## 🌐 Live Application
+📌 Problem Statement
 
-🔗 **Frontend:** https://docu-mind-ai-orpin.vercel.app
+Organizations regularly handle large volumes of structured and unstructured documents — invoices, receipts, academic reports, contracts, and certificates. Manually reading, classifying, and extracting information from these documents is slow, inconsistent, and error-prone, which delays decision-making and increases operational overhead.
 
-🎥 **Demo Video:**
+DocuMind AI solves this by automating the full document intelligence pipeline: a user uploads a document, and the platform automatically understands, classifies, extracts structured data from, validates, and generates actionable insights about that document — with zero manual data entry.
 
----
+🚀 Solution
 
-## 📌 Problem Statement
+DocuMind AI is a secure, full-stack Intelligent Document Processing platform. Once a document is uploaded, it flows through a backend AI pipeline (Google Gemini) that performs document understanding, classification, structured field extraction, internal-consistency validation, and insight generation — all returned as strict, schema-validated JSON (via Zod), never trusted as free-form AI text. Results are persisted in a relational Postgres database (Supabase) and presented through a secure, authenticated dashboard where users can search, filter, review, and correct extracted data.
 
-Organizations and individuals work with a large number of documents such as invoices, receipts, purchase orders, contracts, and reports. Processing these documents manually is slow, repetitive, and error-prone. Modifying, summarizing, or restructuring existing documents often requires tedious manual work or the use of multiple disparate software tools. There is a need for a streamlined, single-platform solution where users can upload a document and simply ask an AI to apply changes or generate a new version based on their specific, natural-language instructions.
+Beyond the core IDP pipeline, the platform includes two additional AI-assisted capabilities: a document Q&A chat ("Ask AI") for querying an uploaded document conversationally, and a natural-language Visual PDF Editor that can generate a modified version of a document based on plain-English instructions.
 
-## 🚀 Solution
+✨ Core Features
 
-**DocuMind AI** is a full-stack AI-powered document transformation application that solves this problem by providing an integrated pipeline that links document storage (Supabase) with advanced generative AI (Google Gemini). Users can upload their PDF documents, type a simple command like "Summarize this document," and the platform automatically handles the extraction, AI processing, and generation of a new transformed document, making document manipulation effortless.
+Intelligent Document Processing Pipeline (primary feature)
 
-## ✨ Core Features
+Document Understanding & Classification — automatically detects document type (invoice, receipt, academic report, etc.)
+Structured Information Extraction — extracts relevant fields dynamically per document type into structured JSON
+AI Output Validation — every AI response is parsed and validated against a strict Zod schema before being trusted or stored; malformed AI output is safely rejected, never silently accepted
+Knowledge Discovery & Actionable Insights — AI-generated insights specific to each document's content
+Confidence Scoring — every processed document reports an AI confidence percentage
 
-- **Upload & Storage**: Securely upload and store PDF documents.
-- **AI Document Transformation**: Generate a new document based on the uploaded document and a user's instruction.
-- **Natural Language Instructions**: Users can provide transformation instructions in plain English.
-- **Document Management**: View, download, and manage both original and transformed documents from a central dashboard.
-- **Side-by-Side Preview**: Compare the original document with the newly transformed AI document directly in the browser.
-- **User Accounts & Security**: Secure user authentication and database isolation using Supabase Row Level Security (RLS).
-- **AI-Powered Insights**: Get useful insights and validate document information automatically.
-- **Mobile Responsive**: Carefully designed layout matching mobile phones, tablets, and folding screens.
+Document Management
 
-## 🏗️ System Architecture
+Secure upload (PDF/JPG/PNG, size-validated, MIME/extension-checked) with Multer
+Full CRUD: view, search, filter, sort, edit extracted fields, and archive documents
+Dashboard with real-time processing stats (total / completed / processing / failed)
 
-The application workflow follows a modular full-stack architecture:
+Security
 
-1. **Frontend (React/Vite)**: Provides the user interface, dashboards, and side-by-side document previews. Communicates with the backend via REST API.
-2. **Backend (Node.js/Express)**: Handles business logic, file routing, and acts as the secure intermediary for AI operations.
-3. **Database & Storage (Supabase)**: Manages secure user authentication, file storage (buckets), and structured relational data for document metadata.
-4. **AI Engine (Google Gemini AI)**: Receives the document buffers and user prompts to execute the transformation operations.
+Custom authentication via JWT + bcrypt (Express backend) — not third-party auth
+Every document/record query enforces per-user ownership at the database level
+Google Gemini API key stored and used backend-only, never exposed to the frontend
+Supabase Row Level Security (RLS) enabled as a defense-in-depth layer at the database level
 
-## 💻 Technology Stack
+Bonus AI Capabilities
 
-**Frontend:**
-- ⚛️ React
-- ⚡ Vite
-- 🌊 Tailwind CSS
-- 🟨 JavaScript
+Ask AI — conversational Q&A over an uploaded document's content
+Visual PDF Editor — generates a modified version of a document from a natural-language instruction, with side-by-side original vs. transformed preview
 
-**Backend:**
-- 🟢 Node.js
-- 🚂 Express.js
-- 🟨 JavaScript
+Other
 
-**Database & Auth:**
-- 🟩 Supabase (PostgreSQL, Storage, Auth)
-- 🔐 Row Level Security (RLS)
+Editable user profile with account statistics and preferences
+Fully responsive layout (mobile, tablet, desktop)
+🏗️ System Architecture
+                         USER
+                           │
+                           ▼
+                ┌────────────────────┐
+                │      FRONTEND      │   React + Vite + React Router
+                │                    │   Tailwind CSS + Axios
+                └─────────┬──────────┘
+                          │  HTTPS REST API
+                          ▼
+                ┌────────────────────┐
+                │      BACKEND       │   Node.js + Express.js
+                │                    │   JWT + bcrypt (auth)
+                │                    │   Zod (validation)
+                │                    │   Multer (file uploads)
+                │                    │   CORS + dotenv
+                └──────┬───────┬─────┘
+                       │       │
+              ┌────────┘       └──────────┐
+              ▼                           ▼
+      ┌─────────────────┐        ┌─────────────────┐
+      │    SUPABASE     │        │  GOOGLE GEMINI  │
+      │  PostgreSQL     │        │  Understanding  │
+      │  Storage        │        │  Classification │
+      │  RLS            │        │  Extraction     │
+      │                 │        │  Validation     │
+      │                 │        │  Insights       │
+      └─────────────────┘        └─────────────────┘
 
-**AI Integration:**
-- 🤖 Google Gemini AI (gemini-3.5-flash)
+Document processing flow: Upload → File Validation (Multer) → Store (Supabase Storage) → Gemini AI (understand → classify → extract → validate → generate insights) → Parse & Validate JSON with Zod → Store Results (Postgres) → Dashboard (view / search / edit / archive)
 
-## 📦 Local Setup
+💻 Technology Stack
 
-### Prerequisites
-- Node.js (v18+)
-- npm
-- Git
+Frontend
 
-### Installation
+⚛️ React.js + Vite
+🧭 React Router
+🌊 Tailwind CSS
+🔗 Axios
+🎨 Lucide Icons
 
-1. **Clone the Repository**
-   ```bash
+Backend
+
+🟢 Node.js + Express.js
+🔑 JWT (JSON Web Token) authentication
+🔒 bcrypt (password hashing)
+✅ Zod (input validation + strict AI output schema validation)
+📎 Multer (secure file upload handling)
+🌐 CORS + dotenv
+
+Database & Storage
+
+🟩 Supabase PostgreSQL (relational data: users, documents, document_results, document_insights)
+🗄️ Supabase Storage (private bucket for uploaded files)
+🔐 Row Level Security (RLS) enabled on all tables
+
+AI
+
+🤖 Google Gemini API (gemini-3.5-flash) — backend-only, structured JSON output mode
+📦 Local Setup
+Prerequisites
+Node.js (v18+)
+npm
+Git
+A Supabase project (with a documents storage bucket)
+A Google Gemini API key
+Installation
+Clone the repository
+bash
    git clone https://github.com/jaswanthbuddepu123-hub/DocuMind-AI.git
    cd DocuMind-AI
-   ```
-
-2. **Backend Setup**
-   ```bash
+Backend setup
+bash
    cd backend
    npm install
+   cp .env.example .env   # then fill in real values, see below
    npm run dev
-   ```
-
-3. **Frontend Setup**
-   ```bash
+Frontend setup
+bash
    cd ../frontend
    npm install
+   cp .env.example .env   # then fill in real values, see below
    npm run dev
-   ```
+Backend runs on http://localhost:5000 (or your configured PORT), frontend on http://localhost:5173 by default.
+🔒 Environment Variables
 
-## 🔒 Environment Variables
+⚠️ Never commit real API keys, passwords, tokens, or credentials to GitHub. Use the .env.example files as templates — real values only ever go in your local .env, which is gitignored.
 
-⚠️ **Never commit real API keys, passwords, tokens, or private credentials to GitHub.**
+Backend (backend/.env)
 
-**Backend (`backend/.env`)**
-```env
-PORT=3000
-SUPABASE_URL=your_supabase_url
+env
+PORT=5000
+FRONTEND_URL=http://localhost:5173
+
+SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
 GEMINI_API_KEY=your_gemini_api_key
-```
 
-**Frontend (`frontend/.env`)**
-```env
-VITE_API_URL=http://localhost:3000
-```
+JWT_SECRET=your_long_random_secret
+JWT_EXPIRES_IN=7d
 
----
-**Author**: Buddepu Venkata Jaswanth  
-**GitHub**: [jaswanthbuddepu123-hub](https://github.com/jaswanthbuddepu123-hub)
+Frontend (frontend/.env)
+
+env
+VITE_API_BASE_URL=http://localhost:5000
+📋 API Overview
+Method	Endpoint	Description
+POST	/api/auth/register	Create a new user account
+POST	/api/auth/login	Authenticate and receive a JWT
+GET	/api/auth/me	Get current authenticated user
+POST	/api/documents/upload	Upload a document; triggers AI processing
+GET	/api/documents	List documents (search/filter/sort/paginate)
+GET	/api/documents/stats	Dashboard stats (total/completed/processing/failed)
+GET	/api/documents/:id	Get a single document with extracted results & insights
+PATCH	/api/documents/:id	Correct/update extracted fields
+DELETE	/api/documents/:id	Archive (soft-delete) a document
+GET	/api/health	Backend health check
+
+All document routes require a valid JWT and are scoped to the authenticated user only.
+
+Author: Buddepu Venkata Jaswanth GitHub: jaswanthbuddepu123-hub
