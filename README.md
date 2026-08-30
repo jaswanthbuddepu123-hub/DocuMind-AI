@@ -1,4 +1,4 @@
-# 📄 DocuMind AI
+🌐 Live Application
 
 > An advanced, AI-powered intelligent document processing platform that transforms unstructured documents into structured, actionable information, enabling seamless chat, visual editing, and analytics.
 
@@ -9,15 +9,15 @@
 - 🔗 **Frontend (Vercel):** https://docu-mind-ai-orpin.vercel.app
 - 🎥 **Demo Video:** *(Add link here)*
 
----
+🚀 Solution
 
-## 📌 Problem Statement
+DocuMind AI is a secure, full-stack Intelligent Document Processing platform. Once a document is uploaded, it flows through a backend AI pipeline (Google Gemini) that performs document understanding, classification, structured field extraction, internal-consistency validation, and insight generation — all returned as strict, schema-validated JSON (via Zod), never trusted as free-form AI text. Results are persisted in a relational Postgres database (Supabase) and presented through a secure, authenticated dashboard where users can search, filter, review, and correct extracted data.
 
 Organizations and individuals work with a large volume of unstructured documents such as invoices, receipts, purchase orders, contracts, and reports. Processing these manually is slow, repetitive, and error-prone. Modifying, summarizing, or restructuring existing documents often requires tedious manual work or the use of multiple disparate software tools. There is a critical need for a streamlined, single-platform solution where users can upload a document and simply ask an AI to apply changes, extract metadata, or answer contextual questions using natural language.
 
 ---
 
-## 🚀 Solution
+✨ Core Features
 
 **DocuMind AI** is a full-stack, AI-powered document intelligence application that solves this problem by providing an integrated pipeline linking secure document storage (Supabase) with advanced generative AI (Google Gemini). 
 
@@ -25,7 +25,11 @@ Users can upload their PDF or Image documents and the platform automatically han
 
 ---
 
-## ✨ Core Features
+Document Understanding & Classification — automatically detects document type (invoice, receipt, academic report, etc.)
+Structured Information Extraction — extracts relevant fields dynamically per document type into structured JSON
+AI Output Validation — every AI response is parsed and validated against a strict Zod schema before being trusted or stored; malformed AI output is safely rejected, never silently accepted
+Knowledge Discovery & Actionable Insights — AI-generated insights specific to each document's content
+Confidence Scoring — every processed document reports an AI confidence percentage
 
 - **Upload & Storage**: Securely upload and store PDF, PNG, and JPG documents (up to 10MB) via drag-and-drop.
 - **Dynamic AI Extraction**: Automatically classify document types and extract context-aware structured fields and line items using Gemini Flash.
@@ -39,9 +43,11 @@ Users can upload their PDF or Image documents and the platform automatically han
 
 ---
 
-## 🏗️ System Architecture
+Secure upload (PDF/JPG/PNG, size-validated, MIME/extension-checked) with Multer
+Full CRUD: view, search, filter, sort, edit extracted fields, and archive documents
+Dashboard with real-time processing stats (total / completed / processing / failed)
 
-The application workflow follows a modular full-stack architecture:
+Security
 
 1. **Frontend (React/Vite)**: Provides the dynamic user interface, dashboards, and side-by-side document previews. Communicates with the backend via secure REST APIs.
 2. **Backend (Node.js/Express)**: Handles business logic, robust error handling, multipart file routing, and acts as the secure intermediary for AI operations.
@@ -50,7 +56,7 @@ The application workflow follows a modular full-stack architecture:
 
 ---
 
-## 💻 Technology Stack
+Bonus AI Capabilities
 
 **Frontend:**
 - ⚛️ React & React Router DOM
@@ -77,25 +83,51 @@ The application workflow follows a modular full-stack architecture:
 
 ---
 
-## 📦 Local Setup
+💻 Technology Stack
 
-### Prerequisites
-- Node.js (v18+)
-- npm
-- Git
+Frontend
 
-### Installation
+⚛️ React.js + Vite
+🧭 React Router
+🌊 Tailwind CSS
+🔗 Axios
+🎨 Lucide Icons
 
-1. **Clone the Repository**
-   ```bash
+Backend
+
+🟢 Node.js + Express.js
+🔑 JWT (JSON Web Token) authentication
+🔒 bcrypt (password hashing)
+✅ Zod (input validation + strict AI output schema validation)
+📎 Multer (secure file upload handling)
+🌐 CORS + dotenv
+
+Database & Storage
+
+🟩 Supabase PostgreSQL (relational data: users, documents, document_results, document_insights)
+🗄️ Supabase Storage (private bucket for uploaded files)
+🔐 Row Level Security (RLS) enabled on all tables
+
+AI
+
+🤖 Google Gemini API (gemini-3.5-flash) — backend-only, structured JSON output mode
+📦 Local Setup
+Prerequisites
+Node.js (v18+)
+npm
+Git
+A Supabase project (with a documents storage bucket)
+A Google Gemini API key
+Installation
+Clone the repository
+bash
    git clone https://github.com/jaswanthbuddepu123-hub/DocuMind-AI.git
    cd DocuMind-AI
-   ```
-
-2. **Backend Setup**
-   ```bash
+Backend setup
+bash
    cd backend
    npm install
+   cp .env.example .env   # then fill in real values, see below
    npm run dev
    ```
    *The backend will run on `http://localhost:3000`*
@@ -104,13 +136,14 @@ The application workflow follows a modular full-stack architecture:
    ```bash
    cd ../frontend
    npm install
+   cp .env.example .env   # then fill in real values, see below
    npm run dev
    ```
    *The frontend will run on `http://localhost:5173`*
 
 ---
 
-## 🔒 Environment Variables
+⚠️ Never commit real API keys, passwords, tokens, or credentials to GitHub. Use the .env.example files as templates — real values only ever go in your local .env, which is gitignored.
 
 ⚠️ **Security Note:** Never commit real API keys, passwords, tokens, or private credentials to GitHub.
 
@@ -126,10 +159,8 @@ JWT_SECRET=your_super_secret_jwt_key
 JWT_EXPIRES_IN=7d
 ```
 
-**Frontend (`frontend/.env`)**
-```env
-VITE_API_URL=http://localhost:3000
-```
+JWT_SECRET=your_long_random_secret
+JWT_EXPIRES_IN=7d
 
 ---
 
