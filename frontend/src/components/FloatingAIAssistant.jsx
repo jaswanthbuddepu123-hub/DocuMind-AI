@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bot, User, Send, Zap, MessageSquare, ChevronRight, ChevronLeft } from 'lucide-react';
 import { chatWithDocument, getChatHistory, listDocuments } from '../services/documentService';
+import { useAIAssistant } from '../context/AIAssistantContext';
 
 const FloatingAIAssistant = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen, selectedDocumentId, setSelectedDocumentId } = useAIAssistant();
   const [chatMessages, setChatMessages] = useState([{ role: 'ai', content: 'Hello! Select a document and ask me anything about it.' }]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [chatDocumentId, setChatDocumentId] = useState('');
   const [isChatting, setIsChatting] = useState(false);
   const [allDocs, setAllDocs] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const fetchDocs = async () => {
@@ -25,6 +27,18 @@ const FloatingAIAssistant = () => {
     };
     fetchDocs();
   }, []);
+
+  // Sync selectedDocumentId from context into local chatDocumentId
+  useEffect(() => {
+    if (selectedDocumentId) {
+      setChatDocumentId(selectedDocumentId);
+    }
+  }, [selectedDocumentId]);
+
+  // Auto-scroll messages to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatting]);
 
   useEffect(() => {
     if (!chatDocumentId) {
@@ -108,28 +122,28 @@ const FloatingAIAssistant = () => {
     setCurrentMessage(action);
   };
 
-  if (!isOpen) {
-    return (
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="fixed right-0 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-3 rounded-l-2xl shadow-xl hover:bg-blue-700 transition-colors z-40 group flex items-center gap-2"
-      >
-        <ChevronLeft size={20} />
-        <Bot size={24} className="group-hover:scale-110 transition-transform" />
-      </button>
-    );
-  }
-
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Toggle button — visible when panel is closed */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed right-0 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-3 rounded-l-2xl shadow-xl hover:bg-blue-700 transition-colors z-40 group flex items-center gap-2"
+        >
+          <ChevronLeft size={20} />
+          <Bot size={24} className="group-hover:scale-110 transition-transform" />
+        </button>
+      )}
+
+      {/* Backdrop on mobile */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-30 md:hidden" 
-          onClick={() => setIsOpen(false)} 
+        <div
+          className="fixed inset-0 bg-black/20 z-30 md:hidden"
+          onClick={() => setIsOpen(false)}
         />
       )}
-      <aside className={`fixed md:relative right-0 top-0 bottom-0 w-80 lg:w-96 bg-white border-l border-gray-200 shadow-sm flex flex-col h-full transition-transform duration-300 dark:bg-gray-900 dark:border-gray-800 z-40 shrink-0 ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0 md:hidden'}`}>
+
+      <aside className={`fixed right-0 top-0 bottom-0 w-[85vw] max-w-[360px] sm:w-80 lg:w-96 bg-white border-l border-gray-200 shadow-2xl flex flex-col h-full transition-transform duration-300 ease-in-out dark:bg-gray-900 dark:border-gray-800 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
         <div className="flex items-center gap-2">
@@ -202,6 +216,7 @@ const FloatingAIAssistant = () => {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}

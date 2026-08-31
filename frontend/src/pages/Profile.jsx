@@ -6,9 +6,37 @@ import { User, Mail, Calendar, Shield, LogOut, CheckCircle2, Clock, XCircle, Fil
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import { dataURLtoFile } from '../utils/fileUtils';
 
+const SignOutModal = ({ onConfirm, onCancel }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
+    <div className="relative bg-slate-900 border border-white/10 rounded-3xl shadow-[0_0_60px_rgba(239,68,68,0.15)] p-8 w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
+      <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-red-500/20 rounded-full blur-[60px] pointer-events-none" />
+      <div className="flex flex-col items-center text-center relative z-10">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+          <LogOut size={28} className="text-red-400" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Sign Out?</h2>
+        <p className="text-slate-400 text-sm leading-relaxed mb-8">
+          Are you sure you want to sign out of <span className="text-indigo-400 font-semibold">DocuMind</span>? You'll need to log in again to access your documents.
+        </p>
+        <div className="flex gap-3 w-full">
+          <button onClick={onCancel} className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-2xl font-medium text-sm transition-all duration-200">
+            Cancel
+          </button>
+          <button onClick={onConfirm} className="flex-1 py-3 px-4 bg-red-500/10 hover:bg-red-500 border border-red-500/30 hover:border-transparent text-red-400 hover:text-white rounded-2xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+            <LogOut size={16} />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const Profile = () => {
   const { user, logout, updateProfile } = useAuth();
   const { theme, toggleTheme, isCompact, toggleCompact } = useTheme();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [stats, setStats] = useState({ total: 0, completed: 0, processing: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -165,7 +193,7 @@ const Profile = () => {
                   <button onClick={() => setIsEditing(true)} className="w-full py-2.5 px-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
                     <Edit3 size={16} /> Edit Profile
                   </button>
-                  <button onClick={logout} className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
+                  <button onClick={() => setShowSignOutModal(true)} className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
                     <LogOut size={16} /> Sign Out
                   </button>
                 </>
@@ -341,6 +369,14 @@ const Profile = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Sign Out Confirmation Modal */}
+      {showSignOutModal && (
+        <SignOutModal
+          onConfirm={() => { setShowSignOutModal(false); logout(); }}
+          onCancel={() => setShowSignOutModal(false)}
+        />
       )}
     </div>
   );

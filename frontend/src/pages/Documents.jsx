@@ -4,11 +4,13 @@ import { listDocuments, deleteDocument } from '../services/documentService';
 import useDebounce from '../hooks/useDebounce';
 import { Search, Filter, Trash2, File, CheckCircle2, Clock, XCircle, UploadCloud, ChevronLeft, ChevronRight, Loader2, ArrowUpDown, Eye } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAIAssistant } from '../context/AIAssistantContext';
 
 const Documents = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isCompact } = useTheme();
+  const { openWithDocument } = useAIAssistant();
 
   // Read initial query params
   const initialStatus = useMemo(() => {
@@ -257,7 +259,7 @@ const Documents = () => {
                     
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); navigate(`/app/dashboard?documentId=${doc.id}`); }}
+                        onClick={(e) => { e.stopPropagation(); openWithDocument(doc.id); }}
                         className="flex-1 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white py-2 rounded-xl text-sm font-medium transition-all duration-300 text-center border border-indigo-500/20 hover:border-transparent flex items-center justify-center gap-1.5 shadow-sm hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                         title="Ask AI"
                       >
