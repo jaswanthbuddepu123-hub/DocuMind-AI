@@ -143,7 +143,7 @@ const FloatingAIAssistant = () => {
         />
       )}
 
-      <aside className={`fixed right-0 top-0 bottom-0 w-[85vw] max-w-[360px] sm:w-80 lg:w-96 bg-white border-l border-gray-200 shadow-2xl flex flex-col h-full transition-transform duration-300 ease-in-out dark:bg-gray-900 dark:border-gray-800 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed right-0 top-0 bottom-0 w-[72vw] max-w-[270px] sm:w-80 lg:w-96 bg-white border-l border-gray-200 shadow-2xl flex flex-col h-full transition-transform duration-300 ease-in-out dark:bg-gray-900 dark:border-gray-800 z-40 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
         <div className="flex items-center gap-2">

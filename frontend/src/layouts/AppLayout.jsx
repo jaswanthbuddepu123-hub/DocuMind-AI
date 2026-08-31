@@ -134,15 +134,6 @@ const AppLayoutContent = () => {
 
           {/* Mobile bottom nav */}
           <nav className="md:hidden fixed bottom-4 left-4 right-4 glass-panel rounded-2xl border border-white/10 flex justify-around items-center p-2 z-40">
-            {/* Sign Out — leftmost */}
-            <button
-              onClick={handleLogoutClick}
-              className="flex flex-col items-center p-2 min-w-[56px] rounded-xl transition-all text-slate-500 hover:text-red-400 hover:bg-red-500/10"
-            >
-              <LogOut size={20} />
-              <span className="text-[9px] mt-1 font-medium">Sign Out</span>
-            </button>
-
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname.startsWith(item.path);
@@ -159,6 +150,14 @@ const AppLayoutContent = () => {
                 </Link>
               );
             })}
+            {/* Sign Out — last (rightmost) */}
+            <button
+              onClick={handleLogoutClick}
+              className="flex flex-col items-center p-2 min-w-[56px] rounded-xl transition-all text-slate-500 hover:text-red-400 hover:bg-red-500/10"
+            >
+              <LogOut size={20} />
+              <span className="text-[9px] mt-1 font-medium">Sign Out</span>
+            </button>
           </nav>
         </main>
       </div>
